@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evidencebound-tradegate"
+version = "0.2.0"
+description = "Fail-closed pre-trade evidence and risk governor for Binance Agent OS"
+requires-python = ">=3.11"
+
+[project.scripts]
+tradegate = "tradegate.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["tradegate*"]
