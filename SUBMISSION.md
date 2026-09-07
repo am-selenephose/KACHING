@@ -8,13 +8,15 @@
 4. Attach the video/demo and public GitHub link.
 5. Complete the Binance survey before 2026-09-08 23:59 UTC.
 
-## X copy
+## Exact X copy
 
-Track A — EvidenceBound TradeGate: a fail-closed pre-trade governor for Binance Agent OS. AI proposes; TradeGate validates live Binance state, returns ALLOW/REVIEW/BLOCK, and binds every decision to a tamper-evident SHA-256 receipt. Demo ↓ GitHub ↓ #AgentOS
+```text
+Track A — EvidenceBound TradeGate: a fail-closed pre-trade governor for Binance Agent OS. AI proposes; TradeGate validates live Binance state, returns ALLOW/REVIEW/BLOCK, and binds each decision to a tamper-evident SHA-256 receipt. #AgentOS #Binance
 
-Add below the text:
-- demo/video attachment
-- GitHub URL
+https://github.com/am-selenephos/evidencebound-runtime/tree/hackathon/binance-agent-os-tradegate
+```
+
+Attach the 110-second demo video to the same reply or quote-repost.
 
 ## Survey inputs to have ready
 
@@ -35,7 +37,7 @@ Known survey URL:
 - Binance profile files
 - account balances
 - UID in the public GitHub repo or demo recording
-- `live-proof.json`
+- `live-proof.json` or `live-proof-demo.json`
 
 ## Demo claim boundary
 
