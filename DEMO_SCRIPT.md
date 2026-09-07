@@ -29,9 +29,7 @@ approved_quote_notional: 0
 
 ## 0:52–1:15 — Evidence receipt
 
-Show the evidence SHA only:
-
-`9434dc11e04a64a90721abdb866241169d89589030358ae7ef90ba3b48d816f2`
+Show only the `evidence_sha256` printed by the live run. The digest changes on every fresh run because the receipt includes the observation timestamp.
 
 **Voice:** "The intent, observations, policy result, reasons and metrics are bound into a canonical SHA-256 receipt."
 
