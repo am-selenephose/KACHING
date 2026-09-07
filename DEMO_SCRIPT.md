@@ -1,5 +1,17 @@
 # EvidenceBound TradeGate — 110-second demo
 
+## Safe recording commands
+
+```bash
+cd ~/money-agent/evidencebound-tradegate
+clear
+sed -n '1,22p' README.md
+PYTHONPATH=. python3 -m tradegate.cli --symbol BNBUSDT --side BUY --quote 10 --evidence-out live-proof-demo.json
+PYTHONPATH=. python3 demo_verify.py
+```
+
+The CLI redacts the account balance. Do not open `live-proof-demo.json`, `~/.binance/`, Binance API Management, or any UID/profile screen while recording.
+
 ## 0:00–0:12 — Hook
 
 **Voice:** "AI agents can propose trades. Proposal is not authorization. EvidenceBound TradeGate is the deterministic gate between an AI action and money."
@@ -33,13 +45,11 @@ Show only the `evidence_sha256` printed by the live run. The digest changes on e
 
 **Voice:** "The intent, observations, policy result, reasons and metrics are bound into a canonical SHA-256 receipt."
 
-Show `ORIGINAL_VERIFIED=True`.
+Run `PYTHONPATH=. python3 demo_verify.py` and show `ORIGINAL_VERIFIED=True`.
 
 ## 1:15–1:32 — Tamper test
 
-Change the protected verdict in a copy of the packet.
-
-Show `TAMPERED_VERIFIED=False`.
+The verifier mutates the protected verdict only in memory and prints `TAMPERED_VERIFIED=False`.
 
 **Voice:** "Change the decision after the fact and verification fails."
 
