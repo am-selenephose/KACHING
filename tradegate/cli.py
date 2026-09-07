@@ -49,6 +49,9 @@ def main() -> int:
 
     decision = TradeGovernor().evaluate(intent, market, account)
     packet = build_evidence_packet(intent, market, account, decision)
+    display_metrics = dict(decision.metrics)
+    if "free_usdt" in display_metrics:
+        display_metrics["free_usdt"] = "[REDACTED]"
     args.evidence_out.write_text(
         json.dumps(packet, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -60,7 +63,7 @@ def main() -> int:
                 "verdict": decision.verdict.value,
                 "approved_quote_notional": str(decision.approved_quote_notional),
                 "reasons": list(decision.reasons),
-                "metrics": decision.metrics,
+                "metrics": display_metrics,
                 "market_source": market.source,
                 "account_source": account.source,
                 "account_authenticated": account.authenticated,
