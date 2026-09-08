@@ -16,9 +16,9 @@ placement, prize, revenue or cloud-CI success.
 | Remote `main` observed before final release push | `190bdd44f79ca86621f7689a297255c393f9f173` |
 
 The browser-tested UI checkpoint is committed locally. The measured screenshots,
-video and release documentation are staged for the final release commit; the remote
-`main` value above is the last observed pre-release head. Local/remote SHA equality
-must be checked again after the final release commit is pushed.
+video and release documentation were packaged in release payload commit
+`f9e0e9e0975da62f68dca655edc274c51b280306`. That commit was pushed to `main`,
+and local/remote SHA equality was observed before this documentation-only follow-up.
 
 ### Browser-tested UI source hashes
 
@@ -228,8 +228,8 @@ their actual confirmations. A prepared post or form field is not a submission.
 | Exact rendered Chromium QA | **PASS** |
 | Seven final screenshots | **PASS locally; final hashes pinned** |
 | 80–100 second demo video | **PASS locally — 98s H.264 1920×1080** |
-| Final release commit and clean-tree rerun | **PENDING** |
-| Local/remote `main` SHA equality | **PENDING** |
+| Final release payload commit and clean-tree gate | **PASS — `f9e0e9e`** |
+| Local/remote `main` SHA equality | **PASS at release payload checkpoint; final doc-only head rechecked in handoff** |
 | GitHub Actions | **UNVERIFIED / ACCOUNT-LEVEL BLOCKER** |
 | X post and official survey | **UNVERIFIED / OWNER ACTION** |
 
