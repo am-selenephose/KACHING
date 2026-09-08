@@ -12,10 +12,33 @@ from typing import Any
 
 from .governor import RiskPolicy
 from .models import AccountSnapshot, MarketSnapshot, TradeIntent
+from .exchange import ExchangeContractSnapshot, evaluate_contract
 
 D = Decimal
 STAGES = ('Normalize', 'Observe', 'Verify evidence', 'Compile policy',
           'Safe envelope', 'Authorize', 'Attest')
+
+EVALUATED_RULES = (
+    'KCH-AUTH-001', 'KCH-ACTION-001', 'KCH-MARKET-001', 'KCH-EXCHANGE-001',
+    'KCH-SPREAD-001', 'KCH-MOVE-001', 'KCH-DEPTH-001', 'KCH-CASH-001',
+    'KCH-NOTIONAL-001',
+)
+
+RULE_BY_REASON = {
+    'ACCOUNT_AUTH_UNAVAILABLE': 'KCH-AUTH-001',
+    'ACCOUNT_TRADING_UNAVAILABLE': 'KCH-AUTH-001',
+    'ACCOUNT_DATA_STALE': 'KCH-AUTH-001',
+    'INVALID_ACCOUNT_TIMESTAMP': 'KCH-AUTH-001',
+    'INVALID_ACCOUNT_STATE': 'KCH-AUTH-001',
+    'SELL_INVENTORY_UNAVAILABLE': 'KCH-ACTION-001',
+    'SPREAD_TOO_WIDE': 'KCH-SPREAD-001',
+    'SPREAD_ELEVATED': 'KCH-SPREAD-001',
+    'EXTREME_24H_MOVE': 'KCH-MOVE-001',
+    'HIGH_24H_MOVE': 'KCH-MOVE-001',
+    'CASH_BUFFER_BREACH': 'KCH-CASH-001',
+    'NO_SAFE_NOTIONAL': 'KCH-NOTIONAL-001',
+    'REQUEST_EXCEEDS_SAFE_ENVELOPE': 'KCH-NOTIONAL-001',
+}
 
 
 def number(value: Decimal) -> str:
@@ -102,8 +125,8 @@ class Compiler:
         self.policy.validate()
 
     def compile(self, intent: FinancialIntent, market: MarketSnapshot,
-                account: AccountSnapshot, *, mode: str = 'live',
-                now: datetime | None = None) -> Compilation:
+                account: AccountSnapshot, *, exchange_contract: ExchangeContractSnapshot | None = None,
+                mode: str = 'live', now: datetime | None = None) -> Compilation:
         intent = intent.normalized()
         if mode not in {'live', 'fixture'}:
             raise ValueError('Invalid observation mode')
@@ -115,8 +138,9 @@ class Compiler:
         review: list[str] = []
         checks: dict[str, bool | None] = {
             'Account authentication': account.authenticated is True,
-            'Market integrity': False, 'Spread': None, '24h movement': None,
-            'Visible depth': None, 'Cash buffer': None, 'Balance fraction': None,
+            'Market integrity': False, 'Exchange contract': None, 'Spread': None,
+            '24h movement': None, 'Visible depth': None, 'Cash buffer': None,
+            'Balance fraction': None,
         }
         if account.authenticated is not True:
             reasons.append('ACCOUNT_AUTH_UNAVAILABLE')
@@ -156,6 +180,18 @@ class Compiler:
         checks['Market integrity'] = market_valid and not any(r in reasons for r in (
             'SYMBOL_MISMATCH', 'MARKET_DATA_STALE', 'MARKET_TIME_IN_FUTURE',
             'INVALID_MARKET_TIMESTAMP', 'OBSERVATION_PROVENANCE_INVALID'))
+        if exchange_contract is None and mode == 'fixture':
+            exchange_contract = ExchangeContractSnapshot(
+                intent.symbol, 'TRADING', ('MARKET',), True, D('0'), None,
+                'fixture', now.isoformat())
+        if exchange_contract is None:
+            reasons.append('EXCHANGE_CONTRACT_UNAVAILABLE')
+            checks['Exchange contract'] = False
+        else:
+            exchange_eval = evaluate_contract(exchange_contract, intent, now,
+                                              max_age_seconds=p.market_snapshot_max_age)
+            checks['Exchange contract'] = exchange_eval.admissible
+            reasons.extend(exchange_eval.reasons)
         safe = D('0')
         metrics: dict[str, str] = {}
         if not reasons:
@@ -190,6 +226,15 @@ class Compiler:
             safe = D('0')
         verdict = 'BLOCK' if reasons else ('REVIEW' if review else 'ALLOW')
         reasons = reasons or review or ['ALL_CHECKS_PASSED']
+        for reason in reasons:
+            if reason.startswith('EXCHANGE_'):
+                RULE_BY_REASON.setdefault(reason, 'KCH-EXCHANGE-001')
+            elif reason in {'INVALID_MARKET_SNAPSHOT', 'SYMBOL_MISMATCH', 'MARKET_DATA_STALE',
+                            'MARKET_TIME_IN_FUTURE', 'INVALID_MARKET_TIMESTAMP',
+                            'OBSERVATION_PROVENANCE_INVALID'}:
+                RULE_BY_REASON.setdefault(reason, 'KCH-MARKET-001')
+        determining_rules = (list(EVALUATED_RULES) if reasons == ['ALL_CHECKS_PASSED'] else
+                             list(dict.fromkeys(RULE_BY_REASON.get(r, 'KCH-MARKET-001') for r in reasons)))
         authorized = intent.requested_quote_notional if verdict == 'ALLOW' else D('0')
         remediation = self.remediate(reasons, safe if mode == 'fixture' else None)
         # Salt is private: a public observation commitment must not be a balance-guessing oracle.
@@ -215,6 +260,7 @@ class Compiler:
             'market_source': market.source if market.source in {'fixture', 'binance-cli:spot', 'binance-rest-fallback:spot'} else 'unavailable',
             'account_authenticated': account.authenticated is True,
             'policy_version': p.version, 'policy_sha256': p.sha256,
+            'evaluated_rules': list(EVALUATED_RULES), 'determining_rules': determining_rules,
             'observation_commitment': digest(private),
         }
         receipt['decision_sha256'] = digest(receipt)

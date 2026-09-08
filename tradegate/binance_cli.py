@@ -11,6 +11,7 @@ from decimal import Decimal
 from typing import Any
 
 from .models import AccountSnapshot, MarketSnapshot
+from .exchange import ExchangeContractSnapshot
 
 
 class BinanceCLIError(RuntimeError):
@@ -118,6 +119,45 @@ class BinanceCLI:
             ask_depth_usdt=side_depth(depth.get("asks", [])),
             source=source,
             observed_at=observed_at,
+        )
+
+    def exchange_contract(self, symbol: str) -> ExchangeContractSnapshot:
+        symbol = symbol.upper()
+        observed_at = datetime.now(timezone.utc).isoformat()
+        payload = self._rest("/api/v3/exchangeInfo", symbol=symbol)
+        rows = payload.get("symbols") if isinstance(payload, dict) else None
+        if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict):
+            raise BinanceCLIError("Malformed exchange contract observation")
+        row = rows[0]
+        if row.get("symbol") != symbol:
+            raise BinanceCLIError("Exchange contract symbol mismatch")
+        filters = row.get("filters")
+        if not isinstance(filters, list):
+            raise BinanceCLIError("Exchange filters missing")
+        min_notional = Decimal("0")
+        max_notional = None
+        try:
+            for item in filters:
+                if not isinstance(item, dict):
+                    continue
+                kind = item.get("filterType")
+                if kind == "NOTIONAL":
+                    min_notional = Decimal(str(item.get("minNotional", "0")))
+                    if item.get("applyMaxToMarket") is True:
+                        max_notional = Decimal(str(item.get("maxNotional", "0")))
+                elif kind == "MIN_NOTIONAL":
+                    min_notional = Decimal(str(item.get("minNotional", "0")))
+        except Exception as exc:
+            raise BinanceCLIError("Malformed exchange notional filter") from exc
+        order_types = row.get("orderTypes")
+        if not isinstance(order_types, list) or not all(isinstance(v, str) for v in order_types):
+            raise BinanceCLIError("Exchange order types missing")
+        return ExchangeContractSnapshot(
+            symbol=symbol, status=str(row.get("status", "")),
+            order_types=tuple(order_types),
+            quote_order_qty_market_allowed=row.get("quoteOrderQtyMarketAllowed") is True,
+            min_notional=min_notional, max_notional=max_notional,
+            source="binance-rest-fallback:exchange-info", observed_at=observed_at,
         )
 
     def account_snapshot(self) -> AccountSnapshot:

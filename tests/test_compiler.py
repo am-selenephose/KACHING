@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 from decimal import Decimal as D
 
 from tradegate.models import AccountSnapshot, MarketSnapshot, TradeIntent
+from tradegate.exchange import ExchangeContractSnapshot
 
 HAS_COMPILER = importlib.util.find_spec('tradegate.compiler') is not None
 if HAS_COMPILER:
@@ -140,8 +141,13 @@ class CompilerTests(unittest.TestCase):
 
     def test_live_provenance_and_envelope_privacy(self):
         self.assertEqual(self.run_case(mode='live').receipt['verdict'], 'BLOCK')
-        r = self.run_case(mode='live', market=replace(self.market, source='binance-cli:spot'),
-                          account=replace(self.account, source='binance-cli:account', observed_at=NOW.isoformat())).receipt
+        contract = ExchangeContractSnapshot(
+            'BNBUSDT', 'TRADING', ('MARKET',), True, D('5'), None,
+            'binance-rest-fallback:exchange-info', NOW.isoformat())
+        r = self.compiler.compile(
+            self.intent, replace(self.market, source='binance-cli:spot'),
+            replace(self.account, source='binance-cli:account', observed_at=NOW.isoformat()),
+            exchange_contract=contract, mode='live', now=NOW).receipt
         self.assertEqual(r['verdict'], 'ALLOW')
         self.assertIsNone(r['safe_envelope'])
         self.assertNotIn('24.37', json.dumps(r))
@@ -167,3 +173,22 @@ class CompilerTests(unittest.TestCase):
     def test_disabled_account_trading_blocks(self):
         r = self.run_case(account=replace(self.account, trading_enabled=False))
         self.assertIn('ACCOUNT_TRADING_UNAVAILABLE', r.receipt['reasons'])
+
+    def test_exchange_contract_rejection_is_determining_rule(self):
+        contract = ExchangeContractSnapshot(
+            'BNBUSDT', 'BREAK', ('MARKET',), True, D('5'), None,
+            'fixture', NOW.isoformat())
+        result = self.compiler.compile(self.intent, self.market, self.account,
+                                       exchange_contract=contract, mode='fixture', now=NOW)
+        self.assertEqual(result.receipt['verdict'], 'BLOCK')
+        self.assertIn('EXCHANGE_SYMBOL_NOT_TRADING', result.receipt['reasons'])
+        self.assertIn('KCH-EXCHANGE-001', result.receipt['determining_rules'])
+
+    def test_valid_exchange_contract_keeps_allow_and_rule_identity(self):
+        contract = ExchangeContractSnapshot(
+            'BNBUSDT', 'TRADING', ('LIMIT', 'MARKET'), True, D('5'), None,
+            'fixture', NOW.isoformat())
+        result = self.compiler.compile(self.intent, self.market, self.account,
+                                       exchange_contract=contract, mode='fixture', now=NOW)
+        self.assertEqual(result.receipt['verdict'], 'ALLOW')
+        self.assertIn('KCH-EXCHANGE-001', result.receipt['evaluated_rules'])
