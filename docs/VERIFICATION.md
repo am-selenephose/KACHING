@@ -1,171 +1,236 @@
-# KACHING! verification record — September 8, 2026
+# KACHING! verification record — September 9, 2026
 
-## Current GitHub and branding check
+This record separates locally reproduced evidence from external release and
+account actions. It is not a claim of deployment, trade execution, contest entry,
+placement, prize, revenue or cloud-CI success.
 
-The integrated authorization kernel is on `hackathon/binance-agent-os-tradegate`.
-The public repository has been renamed to **am-selenephos/KACHING** at the owner's
-request; the product display name is **KACHING!**. The main landing README and
-About description now direct visitors to the KACHING! branch.
+## Source identity
 
-Fresh local regression after the branding changes: **50 root + 77 authorization
-+ 8 UI = 85 passed, 0 failed, 0 skipped**. Compileall, typecheck, production
-build, public audit, 5/5 policy attacks and 7/7 authorization bypasses passed.
-Authorization-kernel semantics were not changed by this branding pass.
+| Field | Observed value |
+|---|---|
+| Public repository | `https://github.com/am-selenephos/KACHING` |
+| Local repository root | Standalone KACHING repository root; no nested product directory |
+| Local branch | `main` |
+| Browser-tested UI checkpoint | `199af1a8afe4f33e398f1a06d30024c4eb93a6e9` |
+| Checkpoint subject | `feat(ui): finish prismatic emerald interface and revoke stale visible authority` |
+| Remote `main` observed before final release push | `190bdd44f79ca86621f7689a297255c393f9f173` |
 
-The current production stylesheet still imports `midnight.css`. The final
-metallic-gold / black RICHY-like / holographic treatment remains pending. No final
-screenshots or video are present in tracked source. The browser plugin still
-returns `ERR_BLOCKED_BY_CLIENT` for the loopback preview, so this pass does not
-claim a new rendered QA result.
+The browser-tested UI checkpoint is committed locally. The measured screenshots,
+video and release documentation are staged for the final release commit; the remote
+`main` value above is the last observed pre-release head. Local/remote SHA equality
+must be checked again after the final release commit is pushed.
 
-One GitHub Actions dispatch recheck returned HTTP 422:
-**“Actions has been disabled for this user.”** Cloud CI remains unverified.
+### Browser-tested UI source hashes
 
-The evidence below records the earlier integrated-kernel verification; it does
-not certify the remaining visual release.
+| Source | SHA-256 |
+|---|---|
+| `ui/src/main.tsx` | `993f14be30297fc6b3fe275aaaf663d940e6177ac72a59579a8bdea9131a6a67` |
+| `ui/src/emerald.css` | `44321412bb3ed1fa8974cecd46f98c8bdb98b630c13237444555282380a46cb1` |
+| `ui/src/style.css` | `7b4b13c89f82ff3c7215e43a5a70493ddb7382f38ca977cbf46f9cc651386769` |
+| `ui/index.html` | `f2854a5e1451463c7d164e8aec47b6785b87b784f0d66f74303ef1151de76114` |
 
-## Authorization-kernel local regression
+These values match the `sourceHashes` in
+[`docs/browser-qa.json`](browser-qa.json) and the files present at checkpoint
+`199af1a` when the browser QA was rerun.
 
-Fresh verification on the isolated `design/kaching-authorization-kernel` worktree:
+## Local executable regression
 
-| Check | Passed | Failed | Skipped |
-|---|---:|---:|---:|
-| EvidenceBound runtime / release-safety tests | 50 | 0 | 0 |
-| KACHING compiler, exchange, authorization, service, HTTP and legacy TradeGate tests | 77 | 0 | 0 |
-| KACHING UI unit tests | 8 | 0 | 0 |
-| **Total test cases** | **85** | **0** | **0** |
+The following checks were reproduced from the standalone repository on September
+9, 2026. The first constrained attempt could not open loopback sockets; after the
+test environment granted loopback network permission, the complete Python suite
+was rerun and passed.
 
-Additional executable gates:
+| Gate | Result | Evidence |
+|---|---|---|
+| Python unittest suite | **PASS** | 77 run, 0 failures, 0 errors, 0 skipped |
+| UI unit suite | **PASS** | 8 declared `test()` cases across 2 files; npm command exited 0 |
+| Python bytecode compilation | **PASS** | `compileall` exited 0 |
+| TypeScript check + Vite production build | **PASS** | 18 modules transformed; build exited 0 |
+| Deterministic policy/evidence arena | **PASS** | 5 / 5 contained |
+| Authorization-bypass gauntlet | **PASS** | baseline VALID; 7 / 7 rejected |
+| Public release-safety audit | **PASS** | `PUBLIC_AUDIT=PASS` |
 
-- Python `compileall`: PASS.
-- TypeScript typecheck + Vite production build: PASS.
-- Public repository safety audit: PASS.
-- `git diff --check`: PASS.
-- Deterministic policy/adversarial arena: **5 / 5 contained**.
-- Authorization bypass gauntlet: exact baseline **VALID**, then **7 / 7 bypasses rejected**.
-
-The seven rejected authorization classes are amount escalation, resource mutation,
-audience mutation, signature forgery, policy drift, expiry and consumed-lease replay.
-These are controlled deterministic tests, not a security certification.
-
-Commands used:
+Commands:
 
 ```bash
 python -m unittest discover -s tests -v
+python demo_attack_suite.py
+python -m compileall -q tradegate tests
+npm test --prefix ui
+npm run build --prefix ui
 python scripts/release_safety_audit.py
-(cd tradegate-hackathon && PYTHONPATH=. python -m unittest discover -s tests -v)
-(cd tradegate-hackathon && python -m compileall -q tradegate tests)
-(cd tradegate-hackathon && PYTHONPATH=. python demo_attack_suite.py)
-npm test --prefix tradegate-hackathon/ui
-npm run build --prefix tradegate-hackathon/ui
 git diff --check
 ```
 
-## Signed authorization proof
+The deterministic attack output was:
 
-The new authorization layer uses Ed25519 through Python `cryptography`. The issuer
-private key is local, owner-readable (`0600`) and outside the repository. Public
-state may expose only the Ed25519 public key/fingerprint and signed lease.
+```text
+5 / 5 POLICY ATTACKS CONTAINED
+BASELINE — VALID
+7 / 7 AUTHORIZATION BYPASSES REJECTED
+```
 
-Verified behavior:
+The seven rejected classes and server reasons were:
 
-- BLOCK and REVIEW issue no authorization lease.
-- ALLOW issues `kaching.authorization.v1` with a 30-second default TTL.
-- The exact signed action verifies VALID with the trusted public key.
-- Signed-payload modification fails signature verification.
-- Changed action/amount, resource or audience fails exact-action verification.
-- Policy hash drift invalidates the lease.
-- Expired leases are rejected.
-- A locally consumed lease is rejected on replay.
-- Private issuer-key material is absent from the serialized lease/browser DTO.
+| Bypass | Result |
+|---|---|
+| Amount escalation | `ACTION_MISMATCH` |
+| Resource mutation | `RESOURCE_MISMATCH` |
+| Audience mutation | `AUDIENCE_MISMATCH` |
+| Signature forgery | `SIGNATURE_INVALID` |
+| Policy drift | `POLICY_DRIFT` |
+| Expired lease | `AUTHORIZATION_EXPIRED` |
+| Consumed-lease replay | `REPLAY_DETECTED` |
 
-Replay state is bounded/in-memory and is not claimed to survive restart or operate
-across distributed PEPs.
+These are controlled fixture tests, not a security certification.
 
-## Fresh live Binance read-only observation
+## Rendered Chromium QA
 
-At approximately **2026-09-08 16:13 UTC**, KACHING performed a fresh read-only
-BNBUSDT authorization compilation using the existing authenticated Binance setup:
+The final UI source hashes above were served through the actual local Python
+bridge and exercised with system Chromium `151.0.7922.173`. The machine-readable
+record timestamp is `2026-09-08T23:05:54.294Z`.
 
-- account authenticated: **true**;
-- market source: `binance-rest-fallback:spot`;
-- current exchange-contract check: **true**;
-- proposal: BUY BNBUSDT, 10 USDT;
-- verdict: **BLOCK**; authorized: **0 USDT**;
-- reasons: `CASH_BUFFER_BREACH`, `NO_SAFE_NOTIONAL`;
-- determining rules: `KCH-CASH-001`, `KCH-NOTIONAL-001`;
-- public live safe envelope: **omitted / owner-private**;
-- authorization lease issued: **false**, as required for BLOCK.
+Status: **PASS — 26 / 26 checks**.
 
-Policy SHA-256:
-`b69dd27694b0e5ed40583bc32334f0b7623bf59c8101164e3851522fbf5fcd9e`
+Verified browser behavior includes:
 
-Decision SHA-256:
-`d87c413ef6644dd11eb68c08bad0a75c0834b476b8b2a4a258d683eb4bcb88db`
+- HTTP 200 and the KACHING! application title;
+- local loading of Gloock, Newsreader and IBM Plex Mono;
+- dark cool-green token `--night: #020d0d`;
+- localized prism film and pointer-responsive optical sheen;
+- zero rejected hero shard elements in the rendered DOM;
+- BLOCK with zero authority and no lease;
+- REVIEW at 100.00 USDT with a 24.37 USDT envelope and zero authority;
+- remediation changes only the draft until recompilation;
+- ALLOW lease fields and a live 30-to-29-second countdown;
+- editing an ALLOW proposal hides the prior visible authority;
+- reload does not present an earlier lease as authority for a current draft;
+- exact signed action VALID;
+- individual amount, resource, audience, signature and replay rejection paths;
+- seven-bypass gauntlet 7 / 7;
+- original receipt PASS and tampered copy FAIL;
+- policy/evidence arena 5 / 5;
+- Judge Mode reaches the Enforcement Lab and 7 / 7 result;
+- expandable ledger event identity;
+- visible keyboard focus;
+- reduced-motion styling and reduced-motion Judge Mode completion;
+- no rendered private-field labels in the bounded scan;
+- zero relevant console warnings/errors and zero failed requests.
 
-No order-test, live order, transfer or withdrawal was requested. No private balance,
-UID, API key, API secret or profile output was printed. This is a dated observation,
-not continuous monitoring.
+Responsive evidence covers all four workspaces — Command Deck, Enforcement Lab,
+Adversarial Arena and Decision Ledger — at 375, 768, 1280, 1440 and 1920 pixels:
+**20 / 20 viewport/workspace combinations with no horizontal overflow**.
 
-## Independent rendered browser QA
+The private-label and secret-pattern scans reduce accidental-disclosure risk; they
+cannot prove absence of every possible secret. The rendered test is a local
+point-in-time result, not continuous monitoring.
 
-A temporary Playwright Core harness outside the repository launched system Chromium
-against the built loopback application. The application itself was not granted any
-extra browser privileges.
+## Final screenshot artifacts
 
-Authorization UI smoke: **PASS**. Verified:
+Each capture is 1920×1080 and was produced by the browser QA run tied to the source
+hashes above.
 
-- HTTP 200 initial load and KACHING rendering;
-- deterministic ALLOW produces a visible signed Ed25519 Authorization Lease;
-- `/api/state` omits `free_usdt`, API-key/secret and auth-error fields;
-- exact signed action at Enforcement Lab: **VALID**;
-- +0.01 USDT action mutation: **REJECTED / ACTION_MISMATCH**;
-- one-button authorization gauntlet: **7 / 7 rejected**;
-- upgraded Judge Mode reaches final scene **7 / 7** and lands in Enforcement Lab;
-- 375 / 768 / 1280 / 1440 / 1920 px viewport widths: no horizontal overflow;
-- keyboard focus works on workspace navigation;
-- reduced-motion path works;
-- relevant browser console errors/warnings: **0**.
+| Artifact | SHA-256 |
+|---|---|
+| `docs/screenshots/01-command-deck.png` | `1e6c11835c188a8c50ba199a9917016adad81c29e9e1f9630a0003cd3a4dd7c4` |
+| `docs/screenshots/02-block.png` | `587da7718258294de3cc28b67d66b54c7eb0aad6a7c71c972f44c7c61cadc0ac` |
+| `docs/screenshots/03-review-safe-envelope.png` | `3330a95a66cfa3def14176278055830cce1df7e4776aea6ccb5e0498365a7e28` |
+| `docs/screenshots/04-authorization-lease.png` | `ae0ed57faa4b21b02ad2b81fc04bc6adf58731f1c557eec849f4dc29e4f6e1d7` |
+| `docs/screenshots/05-enforcement-valid.png` | `57dc7279c6ceff9d494779e88939b6358232baf77c9a8bd48d5f41619e36a869` |
+| `docs/screenshots/06-seven-bypasses.png` | `5ca604d2530f8eb962d6cee696a87aa2c0ee3915a290e0206931633e9e596e3d` |
+| `docs/screenshots/07-receipt-tamper.png` | `eeca12e7ec839dd3ef7cb7549600cdce017d078b6444ca8faf7bbfe1895787f6` |
 
-The browser body/state scan did not expose private balance-field names or credential
-labels. Pattern and rendered-text scans reduce risk but cannot mathematically prove
-the absence of every possible secret.
+The same hashes are stored in the browser QA JSON.
 
-A temporary QA screenshot was captured outside the repository. It is evidence only,
-not final submission artwork.
+## Demo video gate
 
-## Visual theme status
+Status: **PASS locally**. The final fixture-only browser recording exists at
+`docs/demo/KACHING-98s.mp4` and was regenerated after the UI checkpoint commit.
 
-Authorization semantics are deliberately separate from theme tokens. The user has
-approved a final visual direction of true metallic gold, black editorial serif type
-and restrained holographic optical sheen. That art-direction correction has **not
-yet landed on the public hackathon branch** as of this verification record.
+| Field | Measured value |
+|---|---|
+| Duration | **98 seconds** |
+| Resolution | **1920×1080** |
+| Video codec | **h264** |
+| Pixel format | **yuv420p** |
+| Frame rate | **30/1** |
+| File size | **13233989 bytes** |
+| MP4 SHA-256 | `e393b1184b2542403dd8a29b5b918dd856c9f7dddfb5e73f6d3ecc406e67f0e8` |
+| Thumbnail SHA-256 | `0beda985b6340ead2218a183c1ae250e3f7ae57e4ff549063dd9fd0ad3ad53dc` |
+| UI checkpoint shown by recording | `199af1a8afe4f33e398f1a06d30024c4eb93a6e9` |
 
-Therefore the authorization UI is functionally browser-verified, but the final
-submission screenshots/video must be recaptured and the same browser QA rerun after
-the approved metallic-gold theme lands. Current midnight-theme captures are not the
-final submission artwork.
+The recording uses an isolated fixture-only server with an ephemeral Ed25519 issuer
+key and does not enable live Binance observations or financial execution. It includes
+explicit on-screen captions, so the BLOCK → REVIEW → ALLOW → VALID → 7/7 rejection
+story remains understandable when muted. The exported MP4 has no audio stream; the
+prepared voiceover remains in `DEMO_SCRIPT.md` if narration is added later.
 
-## GitHub Actions
+## Live Binance evidence status
 
-The hackathon branch already contains KACHING Python/UI checks in the active CI
-workflow. Earlier manual dispatch returned HTTP 422 with GitHub reporting:
-**“Actions has been disabled for this user.”** No cloud run was created.
+This final package does not include a retained public artifact that independently
+proves a current authenticated Binance account observation. The deterministic
+submission demo therefore makes **no current account-state or live-execution
+claim**. `--live` is an optional read-only local mode, not a requirement for the
+fixture demo.
 
-Local verification is green, but cloud CI remains **UNVERIFIED** until GitHub
-re-enables Actions for the account and a real workflow run completes.
+No order-test, live order, transfer or withdrawal was performed by this
+verification pass.
 
-## Release verdict
+## GitHub Actions status
 
-**AUTHORIZATION KERNEL: INTEGRATED. FINAL VISUAL SUBMISSION: NOT READY.**
+The repository contains an active `KACHING CI` workflow covering Python 3.11,
+3.12 and 3.13 plus Node 24 UI gates. A read-only GitHub check on September 9
+reported that repository Actions permissions were enabled and the workflow was
+active, but `gh run list` returned no runs.
 
-Remaining non-kernel gates before final Track A submission sign-off:
+An earlier manual dispatch attempt recorded HTTP 422 with GitHub reporting
+“Actions has been disabled for this user.” No completed workflow run exists in
+the observed evidence. Cloud CI is therefore **UNVERIFIED / ACCOUNT-LEVEL
+BLOCKER**, not PASS. Recheck once after the final push; only an actual completed
+green run may change this status.
 
-1. user-approved metallic-gold visual theme lands;
-2. rerun rendered QA on that exact merged visual build;
-3. capture final screenshots and demo video;
-4. complete and independently verify the X submission + official Binance survey;
-5. cloud CI remains an external account-level blocker and must not be called PASS.
+## Security-model evidence boundary
 
-No top-three placement, formal AuthZEN conformance, Binance endorsement or universal
-security guarantee is claimed.
+The local results above do not remove these architectural limitations:
+
+- fixture and live ALLOW decisions share one issuer/verifier trust root, and the
+  lease does not encode observation mode;
+- the PEP is a logical verifier in the same local process, not an isolated
+  executor boundary;
+- enforcement does not refresh financial state, reserve funds, aggregate spend or
+  revalidate the observation commitment;
+- multiple unexpired leases may coexist;
+- replay consumption is optional, memory-only and bounded;
+- caller/subject identities are not authenticated;
+- receipt anchors and the visible ledger reset on restart;
+- the issuer PEM is unencrypted and protected only by OS permissions;
+- no browser or PEP live execution path exists.
+
+See [SECURITY.md](../SECURITY.md) for the complete claim boundary.
+
+## External submission handoff
+
+The repository contains no evidence of:
+
+- a final public X reply or quote-post URL;
+- an uploaded public/unlisted video URL;
+- successful official survey submission;
+- accepted contest entry, placement, prize, payment or revenue.
+
+Those account-specific actions remain **UNVERIFIED** until the owner supplies
+their actual confirmations. A prepared post or form field is not a submission.
+
+## Current verdict
+
+| Gate | Verdict |
+|---|---|
+| Authorization and UI local regression | **PASS** |
+| Exact rendered Chromium QA | **PASS** |
+| Seven final screenshots | **PASS locally; final hashes pinned** |
+| 80–100 second demo video | **PASS locally — 98s H.264 1920×1080** |
+| Final release commit and clean-tree rerun | **PENDING** |
+| Local/remote `main` SHA equality | **PENDING** |
+| GitHub Actions | **UNVERIFIED / ACCOUNT-LEVEL BLOCKER** |
+| X post and official survey | **UNVERIFIED / OWNER ACTION** |
+
+**LOCAL PRODUCT EVIDENCE: PASS. EXTERNAL X/SURVEY SUBMISSION: NOT YET VERIFIED.**

@@ -1,44 +1,78 @@
 # KACHING! architecture
 
-KACHING is a local **Policy Decision Point (PDP)** plus a separate local
-**Policy Enforcement Point (PEP) simulation** for financial-agent actions. It is
-AuthZEN-inspired, not a claim of formal AuthZEN conformance.
+KACHING! is a local Policy Decision Point (PDP) plus a logical Policy
+Enforcement Point (PEP) simulation for financial-agent actions. The evaluation
+shape is AuthZEN-inspired; no formal AuthZEN conformance is claimed.
+
+The PDP, issuer and PEP verifier are logical components in one trusted
+single-user Python process. They are not separately deployed or isolated security
+services in this prototype.
 
 ## Trust model
 
-The proposer is untrusted. Natural-language metadata is untrusted. Requested
-action parameters are untrusted. A caller cannot submit policy, account state or
-issuer keys through the browser.
+Untrusted inputs include the proposer, natural-language metadata, requested action
+parameters and caller-supplied identity labels. `origin` and `subject.type` are
+assertions, not authenticated agent or human identities; `subject.id` is not used
+for access control.
 
-Trusted local components are the KACHING process, owner-selected policy, Binance
-observation adapter and local Ed25519 issuer key. Credentials remain managed by
-the owner's Binance CLI outside the repository.
+Trusted local inputs include:
 
-The default authorization posture is deny. **BLOCK and REVIEW authorize zero.**
-Only ALLOW is eligible for a signed authorization lease.
+- the code-configured policy;
+- acquired market, account and exchange-contract snapshots;
+- the KACHING! process and its in-memory receipt anchors;
+- the local Ed25519 issuer private key;
+- the public key selected by the in-process verifier.
 
-## Decision pipeline
+Binance credentials remain in the owner's existing Binance CLI configuration and
+outside the repository. Browser callers cannot provide policy, account state or
+issuer keys. The default posture is deny: BLOCK and REVIEW authorize zero; only
+ALLOW is eligible for a signed lease.
+
+## Runtime topology
+
+```text
+Browser on 127.0.0.1
+        │ JSON / same local origin
+        ▼
+Python HTTP bridge
+        │
+        ├── Service
+        │    ├── observation adapter
+        │    ├── Compiler / PDP
+        │    ├── Ed25519 issuer
+        │    ├── AuthorizationVerifier / logical PEP
+        │    ├── receipt anchors (memory)
+        │    ├── replay cache (memory)
+        │    └── decision ledger (memory)
+        │
+        └── built React UI
+```
+
+The browser/PEP surface has no financial execution method. The same process can
+optionally perform read-only observations when launched with `--live`.
+
+## Decision path
 
 ```text
 FinancialIntent
-    ↓
-01 Normalize
-02 Observe market/account state
-03 Verify evidence + exchange contract
-04 Compile deterministic policy
-05 Calculate Decimal safe envelope
-06 Authorize: ALLOW / REVIEW / BLOCK
-07 Attest decision receipt
-    ↓ ALLOW only
-Ed25519 Authorization Lease
-    ↓
-PEP verifier
-    ↓
-VALID / REJECTED
+    │
+    ├─ 01 Normalize
+    ├─ 02 Observe market/account state
+    ├─ 03 Verify evidence structure, provenance labels and exchange contract
+    ├─ 04 Compile code-configured policy
+    ├─ 05 Calculate Decimal safe envelope
+    ├─ 06 Authorize: ALLOW / REVIEW / BLOCK
+    └─ 07 Attest decision receipt
+            │
+            └─ ALLOW only → Ed25519 Authorization Lease
+                                      │
+                                      └─ local verifier → VALID / REJECTED
 ```
 
-`Compiler.compile()` remains deterministic: it performs no network calls and has
-no execution capability. Observation acquisition happens before compilation.
+The policy-decision calculation is reproducible for fixed normalized inputs,
+policy, observation mode and supplied clock. Compilation performs no network call
+or execution. A complete receipt is intentionally unique because it includes a
+timestamp, random proposal ID and a salted private-evidence commitment.
 
 ## Canonical action identity
 
@@ -50,31 +84,35 @@ Authorization binds a canonical action containing:
 - requested quote notional;
 - audience/tool identifier.
 
-Canonical JSON uses deterministic key ordering and Decimal normalization. Its
-SHA-256 is `intent_sha256`. Changing any policy-relevant field changes the
-action identity. Explanatory metadata is excluded from authorization identity and
-therefore cannot rewrite policy.
+Canonical JSON uses sorted keys and normalized Decimal strings. Its SHA-256 is
+`intent_sha256`. Changing a policy-relevant field changes the identity.
+Explanatory metadata is excluded from authorization identity and cannot rewrite
+policy.
 
-## Binance observation layer
+## Observation adapters
 
-`BinanceCLI` preserves the existing authenticated account observation and live
-market adapter. Public Spot REST remains the fallback for ticker/depth reads when
-the CLI public request wrapper is unavailable.
+In fixture mode, KACHING! constructs explicitly labeled deterministic account,
+market and exchange-contract snapshots. These are demonstration data, not current
+Binance state.
 
-KACHING additionally reads `/api/v3/exchangeInfo` as a read-only exchange
-contract. The compiler fails closed when the contract is missing, stale, malformed,
-for the wrong symbol, not `TRADING`, lacks MARKET support, lacks
-`quoteOrderQtyMarketAllowed`, or rejects the proposed notional under parsed
-notional filters.
+In live mode, the adapter:
 
-Exchange-contract outcomes appear under explicit rule identity
-`KCH-EXCHANGE-001`. Other determining rule IDs identify the policy conditions
-that actually decided the verdict.
+1. reads public ticker and depth through Binance CLI, with Binance Spot REST as a
+   public-market fallback;
+2. reads authenticated account state through Binance CLI;
+3. reads `/api/v3/exchangeInfo` through public Spot REST.
 
-## Safe action envelope
+The exchange-contract parser intentionally covers only symbol identity, status,
+MARKET-order support, `quoteOrderQtyMarketAllowed`, observation time and notional
+bounds. It does not implement the complete `exchangeInfo` contract such as all
+lot-size, price, asset-permission or filter-applicability rules. Missing, stale,
+malformed or unsupported contract state fails closed, but ALLOW cannot predict
+exchange acceptance.
 
-For valid BUY observations, KACHING computes with `Decimal` and rounds down to
-0.01 USDT:
+## Safe-action envelope
+
+For structurally valid BUY observations, KACHING! calculates with `Decimal` and
+rounds down to 0.01 USDT:
 
 ```text
 max(0, min(
@@ -87,89 +125,128 @@ max(0, min(
 
 A request above a positive envelope yields REVIEW and zero authorization. A zero
 envelope yields BLOCK. Live public DTOs hide the exact balance-derived envelope.
+This is a per-decision bound, not a fund reservation or cumulative-spend budget.
 
 ## Decision receipt
 
-Every decision receipt includes policy version/hash, determining rules, sanitized
-checks/reasons, evidence commitment and `decision_sha256`. The running service
-retains up to 100 original decision digests, so a caller cannot simply alter the
-receipt and recalculate its self-reported checksum.
+Every public decision receipt includes:
 
-This receipt checksum is integrity evidence, not issuer authentication.
+- policy version and SHA-256;
+- evaluated and determining rule identities;
+- sanitized checks, reasons and remediation;
+- a salted local observation commitment;
+- `decision_sha256`.
 
-## Authorization lease
+The service retains original decision digests for at most 100 proposals. Receipt
+verification compares a submitted object with that retained digest, so changing a
+receipt and recalculating its self-reported hash is insufficient. The digest and
+anchor provide local integrity checking, not issuer authentication or Binance
+attestation.
 
-Only an ALLOW receipt may be converted into `kaching.authorization.v1`. The
-lease includes:
+The private observation commitment hashes locally assembled intent, policy,
+observations and a random nonce. It reduces balance-guessing risk and binds the
+receipt to retained local evidence, but the exchange does not sign it and the PEP
+does not reopen it.
 
-- exact canonical action and `intent_sha256`;
+## Authorization Lease
+
+Only an ALLOW receipt can become `kaching.authorization.v1`. The default lease
+lasts 30 seconds and contains:
+
+- canonical origin, action, resource and requested amount;
+- intended audience;
 - decision ID and maximum authorized amount;
-- audience;
-- policy version/hash;
-- observation commitment;
-- issue/expiry timestamps (30-second default);
-- random nonce;
-- Ed25519 issuer fingerprint;
+- intent, policy and observation hashes;
+- issue/expiry timestamps and random nonce;
+- issuer public-key fingerprint;
 - Ed25519 signature.
 
-The issuer private key is generated locally at `~/.config/kaching/` by default,
-with owner-only file permissions. Only the public key and fingerprint may be
-returned to the UI.
+The issuer private key is generated at
+`~/.config/kaching/issuer-ed25519.pem` by default. It is an unencrypted PKCS#8 PEM
+protected by directory/file permissions (`0700`/`0600` where supported). Of key
+material, only the public key and fingerprint are returned to the browser. The
+signed lease itself is also returned and displayed; it is not treated as secret
+in this non-executing demo.
 
-## Enforcement verifier
+### Fixture/live trust limitation
 
-The verifier checks signature before trusting the lease payload, then enforces:
+Fixture and live ALLOW decisions currently use the same issuer and verifier, and
+the lease does not encode observation mode. A fixture ALLOW therefore produces a
+cryptographically valid demo lease. This is acceptable only because the PEP has
+no execution capability. A production design must disable fixture issuance in
+the production trust domain and use separate keys/configuration so fixture
+authority can never reach a financial executor.
 
-1. trusted issuer fingerprint;
-2. valid Ed25519 signature;
-3. valid issue/expiry window;
-4. unchanged current policy hash;
-5. exact audience;
-6. exact resource, origin, action and amount;
-7. canonical intent hash;
-8. amount not above the signed authorization ceiling;
-9. optional one-time consumption via bounded in-memory replay cache.
+## Local enforcement verifier
 
-The PEP returns only `VALID` or a deterministic rejection reason. It has no order
-placement function. The replay cache is process-local and intentionally not a
-claim of distributed replay protection.
+After validating schema and trusted issuer fingerprint, the verifier validates
+the Ed25519 signature before evaluating signed claims. It then checks:
 
-## Authorization API
+1. validity window, with up to five seconds of future clock-skew tolerance;
+2. current code-configured policy hash;
+3. exact audience;
+4. exact resource, origin, action and requested amount;
+5. canonical intent SHA-256;
+6. positive authorization ceiling not below the request;
+7. optional nonce consumption through a bounded in-memory replay cache.
 
-The loopback bridge exposes an AuthZEN-inspired evaluation shape:
+The verifier does **not** refresh account, market or exchange state; authenticate
+the proposer; reserve funds; aggregate multiple leases; revalidate the observation
+commitment; or revoke an earlier unexpired lease when a new decision is compiled.
+Multiple independently issued leases may coexist until expiry.
+
+`consume=false` is the API default and supports repeatable previews. When
+`consume=true`, the nonce is recorded in a 512-entry process-local cache. The
+cache is neither durable nor distributed and may evict an unexpired entry under
+capacity pressure. The replay demonstration is therefore bounded evidence, not a
+production one-time-use guarantee.
+
+## Local HTTP API
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/state` | sanitized current decision, lease issuer and ledger |
-| `POST /api/compile` | KACHING-native decision request |
-| `POST /access/v1/evaluation` | Subject / Action / Resource / Context evaluation |
-| `POST /api/verify` | compare public receipt with retained original digest |
-| `POST /api/enforce` | verify a signed lease against an exact proposed action |
-| `POST /api/arena` | five deterministic policy attacks |
-| `POST /api/enforcement-arena` | seven authorization-bypass checks |
+| `GET /api/state` | Current sanitized receipt, signed lease, public issuer data and stage ledger. |
+| `POST /api/compile` | Native proposal compilation. |
+| `POST /access/v1/evaluation` | AuthZEN-inspired Subject / Action / Resource / Context mapping. |
+| `POST /api/verify` | Receipt comparison with a retained original digest. |
+| `POST /api/enforce` | Signed-lease verification against a proposed exact action. |
+| `POST /api/arena` | Five deterministic policy/evidence attacks. |
+| `POST /api/enforcement-arena` | Seven deterministic authorization-bypass checks. |
 
-The HTTP server binds `127.0.0.1`, rejects wrong Host/Origin/cross-site Fetch
-Metadata, accepts JSON-only bounded POST bodies, rejects duplicate keys and
-non-standard numeric constants, applies CSP/no-store headers, and serves only the
-built UI assets.
+The HTTP server binds to `127.0.0.1`. It requires the exact loopback Host header,
+rejects disallowed Origin and `Sec-Fetch-Site: cross-site`, accepts JSON-only POST
+bodies up to 16 KiB, rejects duplicate object keys and non-standard numeric
+constants, constrains static serving to built assets, and sends CSP, no-store,
+nosniff and no-referrer headers.
+
+This bridge has no TLS, caller authentication or authenticated agent identity.
+Origin-less local clients are accepted. In `--live` mode, any accepted loopback
+caller can trigger read-only CLI/REST observations; run it only in a trusted local
+session.
+
+## Volatile state
+
+Receipt anchors, the current receipt/lease, replay entries and the decision ledger
+are memory-only and reset on process restart. The anchor collection holds at most
+100 decisions. The ledger holds at most 70 compiler-stage rows and is not a
+durable security audit log; HTTP and enforcement attempts are not recorded there.
+
+## UI authority state
+
+The React/TypeScript Command Deck presents authentication availability separately
+from authorization. Editing an ALLOW proposal produces a new draft, immediately
+hides the prior visible lease and disables its UI enforcement controls until the
+draft is recompiled. The server-side verifier still relies on lease contents, not
+UI visibility, and a previously issued unexpired lease is not revoked.
+
+The visual system is independent of authorization semantics. Current browser QA
+locks the dark cool-green palette, localized holographic prism, absence of the
+rejected shard element, responsive layout and stale-visible-authority behavior.
+
+## Non-execution boundary
 
 There is no browser route for order-test, live order placement, transfer,
-withdrawal, credential retrieval or policy mutation.
-
-## UI
-
-The React/TypeScript Command Deck visualizes authentication separately from
-authorization. ALLOW can display a short-lived signed Authorization Lease. The
-Enforcement Lab lets a judge present the exact action or mutate amount, resource,
-audience/signature and replay state; the seven-bypass gauntlet exercises the real
-server-side verifier in one action.
-
-Visual theme tokens are independent of authorization semantics so final art
-direction can change without rewriting the financial core.
-
-## Existing-core preservation
-
-Legacy `TradeGovernor`, evidence compatibility, CLI proof generation and the
-non-executing Binance `order-test` path remain. The CLI now also fetches the live
-exchange contract before authorization. `order-test` still requires ALLOW and is
-never exposed through the browser. No code path here places a live order.
+withdrawal, credential retrieval or policy mutation. The legacy CLI can invoke
+Binance `order-test`, a non-executing validation call, only after an ALLOW receipt;
+it is not exposed through the browser or PEP. No code path in this repository
+places a live order.

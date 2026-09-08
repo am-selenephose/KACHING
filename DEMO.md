@@ -10,7 +10,7 @@ From the repository root, after creating and activating a Python 3.11+ virtual
 environment:
 
 ```bash
-python -m pip install -e ./tradegate-hackathon
+python -m pip install -e .
 cd ui
 npm ci --ignore-scripts
 npm run build
@@ -43,14 +43,15 @@ observation, public market state and current `exchangeInfo` contract data.
 
 ## Recording
 
-Use the [canonical 96-second shot list and voiceover](DEMO_SCRIPT.md).
+Use the [canonical 98-second shot list and voiceover](DEMO_SCRIPT.md).
 Record the final production build at **1440×900 or 1920×1080**, after browser and
 responsive checks. Keep the mode/source label visible and preserve the real
 server-returned verdicts and rejection reasons.
 
-The sequence is: untrusted intent → capability versus authorization → read-only
-Binance evidence → BLOCK → REVIEW envelope → ALLOW lease → exact enforcement →
-seven bypasses → final KACHING! thesis.
+The sequence is: KACHING! thesis → untrusted intent → deterministic compiler →
+BLOCK → REVIEW envelope → ALLOW lease → exact enforcement → seven bypasses →
+final KACHING! thesis. The final cut uses clearly labeled local fixtures. Its
+package path is [docs/demo/KACHING-98s.mp4](docs/demo/KACHING-98s.mp4).
 
 For the Binance evidence shot, use a current read-only result or an existing,
 sanitized capture labeled **RECORDED LIVE EVIDENCE** with its actual observation
@@ -69,13 +70,13 @@ to expire or change system time.
 
 | Asset | Required visible evidence |
 |---|---|
-| `docs/screenshots/command-deck.png` — capture pending | KACHING!, untrusted proposal, seven-stage compiler, receipt. |
-| `docs/screenshots/block-state.png` — capture pending | BLOCK, determining rules, zero authorized, no lease. |
-| `docs/screenshots/safe-envelope-review.png` — capture pending | Fixture label, 100.00 USDT requested, 24.37 USDT maximum admissible, zero authorized. |
-| `docs/screenshots/authorization-lease.png` — capture pending | ALLOW fixture, Ed25519, ceiling, countdown, audience, issuer fingerprint. |
-| `docs/screenshots/enforcement-valid.png` — capture pending | Exact signed action and server result VALID. |
-| `docs/screenshots/authorization-gauntlet.png` — capture pending | Baseline VALID and 7/7 bypasses rejected with deterministic reasons. |
-| `docs/screenshots/tamper-failure.png` — capture pending | Modified protected receipt rejected; original authorization unchanged. |
+| [01-command-deck.png](docs/screenshots/01-command-deck.png) | KACHING!, untrusted proposal, seven-stage compiler, receipt. |
+| [02-block.png](docs/screenshots/02-block.png) | BLOCK, determining rules, zero authorized, no lease. |
+| [03-review-safe-envelope.png](docs/screenshots/03-review-safe-envelope.png) | Fixture label, 100.00 USDT requested, 24.37 USDT maximum admissible, zero authorized. |
+| [04-authorization-lease.png](docs/screenshots/04-authorization-lease.png) | ALLOW fixture, Ed25519, ceiling, countdown, audience, issuer fingerprint. |
+| [05-enforcement-valid.png](docs/screenshots/05-enforcement-valid.png) | Exact signed action and server result VALID. |
+| [06-seven-bypasses.png](docs/screenshots/06-seven-bypasses.png) | Baseline VALID and 7/7 bypasses rejected with deterministic reasons. |
+| [07-receipt-tamper.png](docs/screenshots/07-receipt-tamper.png) | Modified protected receipt rejected; original authorization unchanged. |
 
 The [verification record](docs/VERIFICATION.md) records which captures and video
 actually exist, their build provenance and measured video duration. Asset links
@@ -83,7 +84,7 @@ and a recording script alone do not establish completion.
 
 ## Optional technical proof
 
-From `tradegate-hackathon`:
+From the standalone repository root:
 
 ```bash
 python demo_attack_suite.py
@@ -97,8 +98,8 @@ BASELINE — VALID
 7 / 7 AUTHORIZATION BYPASSES REJECTED
 ```
 
-The [full regression commands](README.md#verify-it-yourself) also cover root,
-KACHING! and UI tests, compileall, production build and the public release audit.
+The [full regression commands](README.md#verify-it-yourself) cover the standalone
+77 Python and 8 UI tests, compileall, production build and the public release audit.
 No financial transaction or order-test is required for the recording.
 
 ## Claim boundary

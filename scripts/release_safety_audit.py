@@ -174,7 +174,7 @@ def audit_repository(root: str | Path) -> list[AuditHit]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Fail closed when a public EvidenceBound checkout contains local or secret material."
+        description="Fail closed when a public KACHING! checkout contains local or secret material."
     )
     parser.add_argument(
         "--root",
