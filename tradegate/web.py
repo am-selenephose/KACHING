@@ -26,8 +26,8 @@ def reject_constant(value):
     raise ValueError('Non-standard JSON constant')
 
 
-def create_server(port: int = 8890, live_enabled: bool = False) -> ThreadingHTTPServer:
-    service = Service(live_enabled)
+def create_server(port: int = 8890, live_enabled: bool = False, issuer_key_path: Path | str | None = None) -> ThreadingHTTPServer:
+    service = Service(live_enabled, issuer_key_path=issuer_key_path)
 
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
@@ -92,6 +92,10 @@ def create_server(port: int = 8890, live_enabled: bool = False) -> ThreadingHTTP
                     return self.respond(200, {'verified': service.verify(payload), 'basis': 'server-retained-original-digest'})
                 if self.path == '/api/arena':
                     return self.respond(200, arena())
+                if self.path == '/access/v1/evaluation':
+                    return self.respond(200, service.evaluate_access(payload))
+                if self.path == '/api/enforce':
+                    return self.respond(200, service.enforce(payload))
                 return self.respond(404, {'error': 'Not found'})
             except (ValueError, TypeError, KeyError, RecursionError):
                 return self.respond(400, {'error': 'Invalid or unauthorized request'})

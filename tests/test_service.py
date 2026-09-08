@@ -77,7 +77,64 @@ class ServiceTests(unittest.TestCase):
         self.assertFalse(self.service.valid_request('127.0.0.1:8890', 'https://evil.test', 8890))
 
 
+    def test_block_and_review_never_issue_authorization_lease(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            service = Service(issuer_key_path=Path(tmp) / 'issuer.pem')
+            blocked = service.compile({'scenario': 'block', 'quote': '10'})
+            review = service.compile({'scenario': 'review', 'quote': '100'})
+            self.assertIsNone(blocked.get('authorization_lease'))
+            self.assertIsNone(review.get('authorization_lease'))
+
+    def test_allow_issues_sanitized_signed_lease_and_enforces_exact_action(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            service = Service(issuer_key_path=Path(tmp) / 'issuer.pem')
+            state = service.compile({'scenario': 'allow', 'quote': '10', 'audience': 'binance.spot.newOrder'})
+            lease = state['authorization_lease']
+            self.assertEqual(state['receipt']['verdict'], 'ALLOW')
+            self.assertEqual(lease['schema'], 'kaching.authorization.v1')
+            self.assertIn('issuer_key_fingerprint', lease)
+            self.assertNotIn('PRIVATE', json.dumps(state).upper())
+            exact = service.enforce({'lease': lease, 'origin': 'agent', 'action': 'BUY',
+                                     'symbol': 'BNBUSDT', 'quote': '10',
+                                     'audience': 'binance.spot.newOrder'})
+            changed = service.enforce({'lease': lease, 'origin': 'agent', 'action': 'BUY',
+                                       'symbol': 'BNBUSDT', 'quote': '10.01',
+                                       'audience': 'binance.spot.newOrder'})
+            self.assertEqual(exact, {'valid': True, 'reason': 'VALID'})
+            self.assertEqual(changed['reason'], 'ACTION_MISMATCH')
+
+    def test_authzen_inspired_evaluation_maps_subject_action_resource_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            service = Service(issuer_key_path=Path(tmp) / 'issuer.pem')
+            result = service.evaluate_access({
+                'subject': {'type': 'agent', 'id': 'demo-agent'},
+                'action': {'name': 'BUY'},
+                'resource': {'type': 'binance-spot', 'id': 'BNBUSDT'},
+                'context': {'quote_notional': '10', 'audience': 'binance.spot.newOrder',
+                            'mode': 'fixture', 'scenario': 'allow'},
+            })
+            self.assertTrue(result['decision'])
+            self.assertEqual(result['context']['verdict'], 'ALLOW')
+            self.assertIn('authorization_lease', result['context'])
+
+
+
 class CLIBoundaryTests(unittest.TestCase):
+    def test_cli_fetches_exchange_contract_for_live_authorization(self):
+        case = test_compiler.CompilerTests(); case.setUp()
+        from dataclasses import replace
+        from datetime import datetime, timezone
+        from tradegate.exchange import ExchangeContractSnapshot
+        now = datetime.now(timezone.utc)
+        market = replace(case.market, source='binance-cli:spot', observed_at=now.isoformat())
+        account = AccountSnapshot(Decimal('121.85'), 'binance-cli:account', observed_at=now.isoformat())
+        contract = ExchangeContractSnapshot('BNBUSDT', 'TRADING', ('MARKET',), True,
+                                            Decimal('5'), None,
+                                            'binance-rest-fallback:exchange-info', now.isoformat())
+        with tempfile.TemporaryDirectory() as tmp, patch('sys.argv', ['tradegate', '--quote', '10', '--evidence-out', str(Path(tmp)/'proof.json')]), patch.object(cli.BinanceCLI, 'market_snapshot', return_value=market), patch.object(cli.BinanceCLI, 'account_snapshot', return_value=account), patch.object(cli.BinanceCLI, 'exchange_contract', return_value=contract) as exchange, contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.main(), 0)
+            exchange.assert_called_once_with('BNBUSDT')
+
     def test_review_refuses_order_test(self):
         case = test_compiler.CompilerTests()
         case.setUp()

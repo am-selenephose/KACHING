@@ -51,8 +51,13 @@ def main() -> int:
             "ACCOUNT_AUTH_UNAVAILABLE",
         )
 
+    try:
+        exchange_contract = cli.exchange_contract(intent.symbol)
+    except (BinanceCLIError, ValueError, KeyError, TypeError):
+        exchange_contract = None
+
     proposal = FinancialIntent('human', intent.side, intent.symbol, intent.quote_notional)
-    result = Compiler().compile(proposal, market, account)
+    result = Compiler().compile(proposal, market, account, exchange_contract=exchange_contract)
     receipt = result.receipt
     # Exclusive creation prevents clobbering existing evidence or following symlinks.
     try:

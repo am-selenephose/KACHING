@@ -2,7 +2,9 @@ import http.client
 import importlib.util
 import json
 import threading
+import tempfile
 import unittest
+from pathlib import Path
 
 HAS_WEB = importlib.util.find_spec('tradegate.web') is not None
 if HAS_WEB:
@@ -12,7 +14,8 @@ if HAS_WEB:
 class WebTests(unittest.TestCase):
     def setUp(self):
         self.assertTrue(HAS_WEB, 'Loopback web bridge is not implemented')
-        self.server = create_server(port=0)
+        self.tmp = tempfile.TemporaryDirectory()
+        self.server = create_server(port=0, issuer_key_path=Path(self.tmp.name) / 'issuer.pem')
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.port = self.server.server_port
@@ -22,6 +25,8 @@ class WebTests(unittest.TestCase):
             self.server.shutdown()
             self.server.server_close()
             self.thread.join()
+        if hasattr(self, 'tmp'):
+            self.tmp.cleanup()
 
     def request(self, method, path, payload=None, headers=None):
         conn = http.client.HTTPConnection('127.0.0.1', self.port, timeout=5)
@@ -46,6 +51,29 @@ class WebTests(unittest.TestCase):
         receipt['verdict'] = 'ALLOW'
         _, _, result = self.request('POST', '/api/verify', receipt)
         self.assertFalse(json.loads(result)['verified'])
+
+    def test_authzen_evaluation_and_enforcement_routes(self):
+        payload = {
+            'subject': {'type': 'agent', 'id': 'web-agent'},
+            'action': {'name': 'BUY'},
+            'resource': {'type': 'binance-spot', 'id': 'BNBUSDT'},
+            'context': {'quote_notional': '10', 'audience': 'binance.spot.newOrder',
+                        'mode': 'fixture', 'scenario': 'allow'},
+        }
+        status, _, body = self.request('POST', '/access/v1/evaluation', payload)
+        self.assertEqual(status, 200)
+        evaluation = json.loads(body)
+        self.assertTrue(evaluation['decision'])
+        lease = evaluation['context']['authorization_lease']
+        enforce = {'lease': lease, 'origin': 'agent', 'action': 'BUY',
+                   'symbol': 'BNBUSDT', 'quote': '10',
+                   'audience': 'binance.spot.newOrder'}
+        status, _, body = self.request('POST', '/api/enforce', enforce)
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {'valid': True, 'reason': 'VALID'})
+        enforce['quote'] = '10.01'
+        _, _, body = self.request('POST', '/api/enforce', enforce)
+        self.assertEqual(json.loads(body)['reason'], 'ACTION_MISMATCH')
 
     def test_cross_origin_refused(self):
         status, _, _ = self.request('POST', '/api/compile', {}, {'Origin': 'https://evil.test'})
