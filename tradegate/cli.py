@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from decimal import Decimal
 from pathlib import Path
 
 from .binance_cli import BinanceCLI, BinanceCLIError
-from .evidence import build_evidence_packet, verify_evidence_packet
-from .governor import TradeGovernor
-from .models import AccountSnapshot, TradeIntent, Verdict
+from .models import AccountSnapshot, TradeIntent
+from .compiler import Compiler, FinancialIntent, human_receipt, verify_receipt
 
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(
-        description="EvidenceBound TradeGate for Binance Agent OS"
+        description="KACHING! — proof-carrying financial action firewall"
     )
     result.add_argument("--symbol", default="BNBUSDT")
     result.add_argument("--side", choices=["BUY", "SELL"], default="BUY")
@@ -24,71 +24,61 @@ def parser() -> argparse.ArgumentParser:
         default=Path("tradegate-evidence.json"),
     )
     result.add_argument("--order-test", action="store_true")
+    result.add_argument("--human", action="store_true", help="Print sanitized human-readable receipt")
     return result
 
 
 def main() -> int:
     args = parser().parse_args()
-    intent = TradeIntent(args.symbol, args.side, args.quote).normalized()
+    try:
+        intent = TradeIntent(args.symbol, args.side, args.quote).normalized()
+    except ValueError:
+        parser().error('Invalid financial intent')
     cli = BinanceCLI()
 
     try:
         market = cli.market_snapshot(intent.symbol)
-    except BinanceCLIError as exc:
-        parser().error(str(exc))
+    except (BinanceCLIError, ValueError, KeyError, TypeError):
+        parser().error('Market observation unavailable; authorization refused')
 
     try:
         account = cli.account_snapshot()
-    except BinanceCLIError as exc:
+    except (BinanceCLIError, ValueError, KeyError, TypeError):
         account = AccountSnapshot(
             Decimal("0"),
             "binance-cli:account-unavailable",
             False,
-            str(exc),
+            "ACCOUNT_AUTH_UNAVAILABLE",
         )
 
-    decision = TradeGovernor().evaluate(intent, market, account)
-    packet = build_evidence_packet(intent, market, account, decision)
-    display_metrics = dict(decision.metrics)
-    if "free_usdt" in display_metrics:
-        display_metrics["free_usdt"] = "[REDACTED]"
-    args.evidence_out.write_text(
-        json.dumps(packet, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-
-    print(
-        json.dumps(
-            {
-                "verdict": decision.verdict.value,
-                "approved_quote_notional": str(decision.approved_quote_notional),
-                "reasons": list(decision.reasons),
-                "metrics": display_metrics,
-                "market_source": market.source,
-                "account_source": account.source,
-                "account_authenticated": account.authenticated,
-                "evidence_sha256": packet["evidence_sha256"],
-                "evidence_verified": verify_evidence_packet(packet),
-                "evidence_file": str(args.evidence_out),
-            },
-            indent=2,
-        )
-    )
+    proposal = FinancialIntent('human', intent.side, intent.symbol, intent.quote_notional)
+    result = Compiler().compile(proposal, market, account)
+    receipt = result.receipt
+    # Exclusive creation prevents clobbering existing evidence or following symlinks.
+    try:
+        fd = os.open(args.evidence_out, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except OSError:
+        parser().error('Evidence path unavailable or already exists; choose a new private path')
+    with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+        json.dump(result.private_evidence, stream, indent=2, sort_keys=True, allow_nan=False)
+        stream.write('\n')
+    print(human_receipt(receipt) if args.human else json.dumps({
+        'receipt': receipt, 'evidence_verified': verify_receipt(receipt, receipt['decision_sha256'])}, indent=2))
 
     if args.order_test:
-        if decision.verdict == Verdict.BLOCK:
+        if receipt['verdict'] != 'ALLOW':
             parser().error(
-                "risk governor blocked the intent; refusing Binance order-test"
+                "KACHING requires ALLOW; refusing Binance order-test"
             )
         try:
             result = cli.test_market_order(
                 intent.symbol,
                 intent.side,
-                decision.approved_quote_notional,
+                Decimal(receipt['authorized']),
             )
         except BinanceCLIError as exc:
             parser().error(str(exc))
-        print(json.dumps({"binance_order_test": result}, indent=2))
+        print(json.dumps({"binance_order_test": "VALIDATED_NON_EXECUTING"}))
 
     return 0
 

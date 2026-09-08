@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any
+import re
 
 
 class Verdict(str, Enum):
@@ -23,9 +25,13 @@ class TradeIntent:
         side = self.side.upper().strip()
         if side not in {"BUY", "SELL"}:
             raise ValueError("side must be BUY or SELL")
-        if not symbol or not symbol.endswith("USDT"):
+        if not re.fullmatch(r"[A-Z0-9]{2,16}USDT", symbol):
             raise ValueError("v0.2 supports USDT quote symbols only")
-        if self.quote_notional <= 0:
+        if (not isinstance(self.quote_notional, Decimal)
+                or not self.quote_notional.is_finite()
+                or not Decimal('0') < self.quote_notional <= Decimal('1000000000000')
+                or len(self.quote_notional.as_tuple().digits) > 32
+                or self.quote_notional.as_tuple().exponent < -18):
             raise ValueError("quote_notional must be positive")
         return TradeIntent(symbol=symbol, side=side, quote_notional=self.quote_notional)
 
@@ -59,6 +65,8 @@ class AccountSnapshot:
     source: str = "unknown"
     authenticated: bool = True
     auth_error: str = ""
+    trading_enabled: bool = True
+    observed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 @dataclass(frozen=True)

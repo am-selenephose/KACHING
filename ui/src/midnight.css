@@ -1,0 +1,146 @@
+/* Mahnoor's final direction: midnight black, gold light, sculpted editorial type.
+   Layout lives in style.css; this layer owns material, color and illumination. */
+:root {
+  color-scheme: only dark;
+  --background: #080808;
+  --surface: #10100f;
+  --foreground: #dcd2bb;
+  --muted: #ada38e;
+  --gold: #edc879;
+  --gold-bright: #ffe3a2;
+  --ink: #d6b776;
+  --line: #4f4634;
+  --fine: #302b22;
+  --control-line: #8d7954;
+  --pass: #a4c59f;
+  --fail: #ee9c8f;
+  --review: #e4bf72;
+  --gold-glow: 0 0 1px #ffe8b6, 0 0 14px #edba5152, 0 0 38px #c28b2729;
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  color: var(--foreground);
+  background: var(--background);
+  background-image: radial-gradient(ellipse at 53% 3%, #b98d2c08, transparent 55%);
+}
+body::before { opacity: .07; background: repeating-linear-gradient(0deg, #d4b77a10 0 1px, transparent 1px 4px); mix-blend-mode: screen; }
+::selection { background: #edc87935; color: var(--gold-bright); }
+.instrument { max-width: 1664px; }
+.masthead { border-bottom-color: var(--line); }
+.brand-subtitle, .thesis, .edition, .hero-note, .section-intro, .index, footer, .section-label { color: var(--muted); }
+.brand-subtitle { letter-spacing: .025em; }
+.thesis span:last-child { color: var(--gold); }
+.edition { font-size: 14px; }
+.wordmark { filter: drop-shadow(0 0 8px #eabb4336); }
+.wordmark-image { opacity: 0; }
+.wordmark::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: var(--gold-bright);
+  mask: url('/wordmark.svg') left center/contain no-repeat;
+}
+.wordmark::after, .optical::after { display: none; }
+.wordmark:hover { color: var(--gold-bright); filter: drop-shadow(0 0 11px #eabb4366); }
+.hero h1 { color: #e8ddc6; letter-spacing: -.035em; }
+.hero h1 .optical { color: var(--gold-bright); text-shadow: var(--gold-glow); }
+.hero-note .index { color: var(--gold); }
+h2 { color: var(--gold); text-shadow: 0 0 18px #edba5118; }
+h3 { color: var(--foreground); }
+.system-strip { color: var(--muted); font-size: 14px; }
+.signal { background: var(--muted); }
+.signal.good { background: var(--pass); box-shadow: 0 0 7px #a4c59f44; }
+.execution { color: var(--gold); }
+.nav { color: var(--muted); }
+.nav.active { color: var(--gold-bright); text-shadow: 0 0 12px #edba5144; }
+.nav.active::after { background: var(--gold); box-shadow: 0 0 8px #edba5166; }
+.judge { color: var(--gold-bright); border-color: var(--control-line); background: #edc87908; }
+.judge span { color: var(--gold); }
+.notice { color: var(--foreground); border-color: var(--control-line); background: #edc87908; }
+.notice small { color: var(--muted); }
+.notice.error { color: var(--fail); }
+.notice button { background: none; color: inherit; border: 0; text-decoration: underline; }
+.section-label { font-size: 13px; }
+.section-label span:last-child { color: var(--gold); }
+.proposal label { color: var(--muted); }
+.proposal select, .proposal input, .proposal textarea {
+  background: var(--surface); border-color: var(--control-line); color: var(--foreground);
+}
+.proposal input { color: var(--gold-bright); }
+.proposal option { background: var(--surface); color: var(--foreground); }
+.intent-line strong { color: var(--foreground); }
+.compile { color: var(--gold-bright); border-color: var(--control-line); }
+.compile span { color: var(--gold); }
+.raw-authority { color: var(--muted); }
+.raw-authority strong { color: var(--gold); }
+.stages li { opacity: 1; color: var(--muted); }
+.stages li.completed { color: var(--foreground); }
+.stages li.completed > span:first-child, .stages li.completed > span:last-child { color: var(--gold); text-shadow: 0 0 9px #edba5155; }
+.matrix { color: var(--foreground); }
+.matrix > div { padding: 2px 0; }
+.matrix > div > span:last-child { font-size: 14px; }
+.pass { color: var(--pass); }
+.fail { color: var(--fail); }
+.envelope { color: var(--muted); }
+.envelope strong { color: var(--gold-bright); }
+.verdict { border-top-color: var(--control-line); }
+.verdict-word { color: var(--gold-bright); text-shadow: var(--gold-glow); letter-spacing: -.035em; }
+.verdict p { color: var(--foreground); max-width: 40ch; }
+.verdict.review .verdict-word::before { background: var(--review); }
+.verdict.block .verdict-word::before { box-shadow: 0 0 8px #ee9c8f44; }
+.remediation h3 { color: var(--gold); }
+.remediation p { color: var(--muted); }
+.revise {
+  margin-top: 16px; width: 100%; border: 1px solid var(--control-line);
+  background: #edc87908; padding: 12px; text-align: left; color: var(--gold-bright);
+}
+.revise > span { float: right; }
+.revise small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
+.receipt-fields dt, .reasons > span, .hash > span { color: var(--muted); }
+.receipt-fields dd { color: var(--foreground); }
+.receipt-fields > div:nth-child(3) dd, .receipt-fields > div:nth-child(4) dd { color: var(--gold-bright); }
+.hash code { font-size: 12px; color: var(--foreground); }
+.receipt details summary { color: var(--gold); }
+.receipt details code { font-size: 12px; color: var(--muted); }
+.integrity { color: var(--gold); border-top-color: var(--control-line); }
+.receipt-actions button, .receipt-actions a { color: var(--foreground); min-height: 44px; }
+.receipt-actions button > span { color: var(--gold); }
+.receipt-note { color: var(--muted); font-size: 13px; }
+.receipt > small { color: var(--gold); }
+.arena button { border-color: var(--control-line); color: var(--gold); }
+.arena-score { color: var(--gold-bright); text-shadow: var(--gold-glow); }
+.arena-score span { color: var(--muted); text-shadow: none; }
+.arena article p, .arena > p, .ledger > p, .empty-state { color: var(--muted); }
+.arena article h3 { color: var(--foreground); }
+.events summary > span:last-child { color: var(--gold); }
+.events time, .events code { color: var(--muted); }
+footer { border-top-color: var(--line); font-size: 13px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible,
+select:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--gold-bright); outline-offset: 4px;
+  box-shadow: 0 0 16px #edba5133;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .wordmark, .optical, .nav { transition: filter 200ms ease-out, text-shadow 200ms ease-out, color 150ms ease-out; }
+  .optical:hover { text-shadow: 0 0 2px #ffe8b6, 0 0 20px #edba5166, 0 0 44px #c28b2738; }
+  button:not(:disabled):hover, .receipt-actions a:hover { background-color: #edc87910; color: var(--gold-bright); }
+}
+@media (min-width: 1001px) and (max-height: 1000px) {
+  .hero { padding: 25px 0 27px; }
+  .hero h1 { font-size: 45px; }
+  .deck { grid-template-columns: minmax(220px,.9fr) minmax(370px,1.6fr) minmax(250px,1fr); gap: 30px; }
+  .deck > section + section { padding-left: 30px; }
+  .verdict-word { font-size: 70px; }
+  .remediation p { font-size: 15px; }
+}
+@media (max-width: 650px) {
+  .hero h1 { font-size: 37px; }
+  .masthead .thesis { max-width: 100px; font-size: 13px; }
+  .brand-subtitle { max-width: 195px; }
+  .receipt-actions { gap: 12px; }
+  .verdict-word { font-size: 72px; }
+  .section-label span:last-child { text-align: right; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Keep static illumination; disable only the changing light and playback delays. */
+  .wordmark, .wordmark:hover { filter: drop-shadow(0 0 8px #eabb4336); }
+}

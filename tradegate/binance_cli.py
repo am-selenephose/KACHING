@@ -53,14 +53,12 @@ class BinanceCLI:
             raise BinanceCLIError("binance-cli timed out") from exc
 
         if process.returncode != 0:
-            message = process.stderr.strip() or process.stdout.strip()
-            raise BinanceCLIError(message or "binance-cli failed")
+            raise BinanceCLIError("binance-cli failed; inspect private CLI diagnostics locally")
 
         try:
             return json.loads(process.stdout.strip())
         except json.JSONDecodeError as exc:
-            preview = process.stdout[:300]
-            raise BinanceCLIError(f"expected JSON, got: {preview}") from exc
+            raise BinanceCLIError("binance-cli returned invalid JSON") from exc
 
     @staticmethod
     def _unwrap(payload: Any) -> Any:
@@ -82,10 +80,11 @@ class BinanceCLI:
             with urllib.request.urlopen(request, timeout=10) as response:
                 return json.loads(response.read().decode("utf-8"))
         except Exception as exc:
-            raise BinanceCLIError(f"Binance REST failed: {exc}") from exc
+            raise BinanceCLIError("Binance public observation unavailable") from exc
 
     def market_snapshot(self, symbol: str, depth_levels: int = 20) -> MarketSnapshot:
         symbol = symbol.upper()
+        observed_at = datetime.now(timezone.utc).isoformat()
         try:
             book = self._unwrap(
                 self._run("spot", "ticker-book-ticker", "--symbol", symbol)
@@ -118,21 +117,26 @@ class BinanceCLI:
             bid_depth_usdt=side_depth(depth.get("bids", [])),
             ask_depth_usdt=side_depth(depth.get("asks", [])),
             source=source,
-            observed_at=datetime.now(timezone.utc).isoformat(),
+            observed_at=observed_at,
         )
 
     def account_snapshot(self) -> AccountSnapshot:
         payload = self._unwrap(
             self._run("spot", "get-account", "--omit-zero-balances", "false")
         )
-        balances = payload.get("balances", []) if isinstance(payload, dict) else []
+        if not isinstance(payload, dict) or not isinstance(payload.get('balances'), list):
+            raise BinanceCLIError('Malformed account observation')
+        if not isinstance(payload.get('canTrade'), bool):
+            raise BinanceCLIError('Account trading permission missing')
+        balances = payload['balances']
         for row in balances:
             if row.get("asset") == "USDT":
                 return AccountSnapshot(
                     free_usdt=Decimal(str(row.get("free", "0"))),
                     source="binance-cli:account",
+                    trading_enabled=payload['canTrade'],
                 )
-        return AccountSnapshot(Decimal("0"), "binance-cli:account")
+        return AccountSnapshot(Decimal("0"), "binance-cli:account", trading_enabled=payload['canTrade'])
 
     def test_market_order(
         self,

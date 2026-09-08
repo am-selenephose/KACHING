@@ -1,3 +1,3 @@
-"""EvidenceBound TradeGate — fail-closed Binance Agent OS trade governor."""
+"""KACHING! — deterministic authorization, built on EvidenceBound TradeGate."""
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"

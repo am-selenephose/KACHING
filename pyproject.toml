@@ -4,12 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "evidencebound-tradegate"
-version = "0.2.0"
-description = "Fail-closed pre-trade evidence and risk governor for Binance Agent OS"
+version = "1.0.0"
+description = "KACHING! proof-carrying financial action firewall for Binance Agent OS"
 requires-python = ">=3.11"
 
 [project.scripts]
 tradegate = "tradegate.cli:main"
+kaching = "tradegate.web:main"
 
 [tool.setuptools.packages.find]
 include = ["tradegate*"]

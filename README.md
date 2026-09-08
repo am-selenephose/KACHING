@@ -1,39 +1,38 @@
-# EvidenceBound TradeGate
+# KACHING!
 
-Fail-closed pre-trade authorization for Binance Agent OS.
+**Before an AI can touch money, it must carry proof.**
 
-**AI proposes. TradeGate decides what is allowed to touch money.**
-
-TradeGate reads live Binance market state plus authenticated account state, applies a deterministic policy, and returns `ALLOW`, `REVIEW`, or `BLOCK`. Every decision is bound into a canonical SHA-256 evidence receipt. Missing authorization fails closed.
-
-```text
-AI intent -> Binance state -> deterministic governor -> evidence receipt
-                                                   -> ALLOW / REVIEW / BLOCK
-```
-
-A real production-account integration test against BNBUSDT produced a genuine `BLOCK` for a proposed 10 USDT BUY because the account state could not satisfy the cash-buffer rule. The original receipt verified; changing the protected verdict caused verification to fail. No live order or funds movement occurred.
-
-## Run
+This directory is the executable Track A submission. The original TradeGate
+adapter and regression tests remain beneath KACHING's compiler and command deck.
 
 ```bash
-python -m pip install -e .
-binance-cli profile view
-tradegate --symbol BNBUSDT --side BUY --quote 10 --evidence-out live-proof.json
+cd ui
+npm ci --ignore-scripts
+npm run build
+cd ..
+python -m tradegate.web
 ```
 
-`live-proof.json` is deliberately gitignored because it can contain account-state values.
-
-## Test
+Open http://127.0.0.1:8890 and run the judge demo. Offline fixtures are the default.
+For live read-only observations, use `python -m tradegate.web --live` with the
+owner's existing configured Binance CLI. Never display the CLI profile in a demo.
 
 ```bash
 python -m unittest discover -s tests -v
+python demo_attack_suite.py
 python -m compileall -q tradegate tests
 ```
 
-Six deterministic tests cover auth failure, cash-buffer rejection, ALLOW, REVIEW, depth rejection, and tamper detection.
+For a private live receipt, choose a new output path each time:
 
-## Execution boundary
+```bash
+python -m tradegate.cli --symbol BNBUSDT --side BUY --quote 10 --human \
+  --evidence-out private-evidence-recording.json
+python demo_verify.py private-evidence-recording.json
+```
 
-This build contains no withdrawal, transfer, or live-order placement path. `--order-test` uses Binance's non-executing order-test endpoint and is refused when the governor returns `BLOCK`.
+The CLI output is sanitized; the evidence file is private and owner-readable only.
+No order-test is requested above. Existing files are not overwritten.
 
-See `DEMO_SCRIPT.md` for the 110-second demo and `SUBMISSION.md` for the Track A posting checklist.
+[Product overview](../README.md) · [Architecture](../ARCHITECTURE.md) ·
+[Security](../SECURITY.md) · [Demo](../DEMO.md) · [Submission](SUBMISSION.md)
