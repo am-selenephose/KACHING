@@ -2,11 +2,10 @@
 
 **Before an AI can touch money, it must carry proof.**
 
-Public source: [hackathon/binance-agent-os-tradegate](https://github.com/am-selenephos/KACHING/tree/hackathon/binance-agent-os-tradegate)
+Public source: [am-selenephos/KACHING](https://github.com/am-selenephos/KACHING)
 
-Pull request: [PR #5](https://github.com/am-selenephos/KACHING/pull/5)
 
-The hackathon branch is the submission artifact. The [verification record](../docs/VERIFICATION.md)
+The standalone repository is the submission artifact. The [verification record](docs/VERIFICATION.md)
 contains the final source/build identifiers, actual test and browser results,
 captured assets, PR state and CI status. This document does not establish that an
 entry has been posted or a survey submitted.
@@ -34,7 +33,7 @@ labels. Nothing is posted or submitted by this package.
 
 ```text
 Track A — KACHING! Capability ≠ authorization. Binance state + exchange rules + deterministic policy → ALLOW/REVIEW/BLOCK. ALLOW issues a 30s Ed25519 lease for exact action. Mutated, expired or replayed authority is rejected. No live execution. #AgentOS
-https://github.com/am-selenephos/KACHING/tree/hackathon/binance-agent-os-tradegate
+https://github.com/am-selenephos/KACHING
 ```
 
 **Estimated weighted count: 279 / 280**, including the newline and branch URL.
@@ -46,7 +45,7 @@ the same reply or quote-repost.
 
 ```text
 Track A — KACHING! AI proposes. Policy authorizes. Binance state + exchange rules → ALLOW/REVIEW/BLOCK. ALLOW alone issues an Ed25519 lease. Exact action: VALID. Seven bypasses: REJECTED. No live execution. #AgentOS
-https://github.com/am-selenephos/KACHING/tree/hackathon/binance-agent-os-tradegate
+https://github.com/am-selenephos/KACHING
 ```
 
 **Estimated weighted count: 240 / 280**, including the newline and branch URL.
@@ -60,11 +59,11 @@ another URL. Attached media through the official client carries no text weight.
 
 | Item | Source / evidence |
 |---|---|
-| Public runnable source | Hackathon branch linked above; install and launch in [README](../README.md#run-kaching). |
+| Public runnable source | Hackathon branch linked above; install and launch in [README](README.md#run-kaching). |
 | Video | [96-second shot list and voiceover](DEMO_SCRIPT.md); actual captured path and duration in the verification record. |
-| Seven final screenshots | [Capture index](../DEMO.md#required-screenshots): command deck, BLOCK, REVIEW envelope, ALLOW lease, exact enforcement, seven bypasses, receipt tamper. |
-| Authorization explanation | [Architecture](../ARCHITECTURE.md) and [security boundary](../SECURITY.md). |
-| Evidence of checks | [VERIFICATION.md](../docs/VERIFICATION.md), including local results and actual CI availability. |
+| Seven final screenshots | [Capture index](DEMO.md#required-screenshots): command deck, BLOCK, REVIEW envelope, ALLOW lease, exact enforcement, seven bypasses, receipt tamper. |
+| Authorization explanation | [Architecture](ARCHITECTURE.md) and [security boundary](SECURITY.md). |
+| Evidence of checks | [VERIFICATION.md](docs/VERIFICATION.md), including local results and actual CI availability. |
 | Public entry | Owner's reply/quote-repost with video/demo and branch URL; do not mark submitted without its real URL. |
 | Survey | Owner's official form; do not mark submitted without observed confirmation. |
 

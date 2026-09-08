@@ -7,3 +7,11 @@ live-proof*.json
 *private*.json
 .env
 .env.*
+node_modules/
+ui/node_modules/
+ui/dist/
+dist/
+*.pem
+*.key
+*.p12
+*.pfx
