@@ -60,6 +60,19 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(len(result['attacks']), 5)
         self.assertTrue(all(a['contained'] for a in result['attacks']))
 
+    def test_enforcement_arena_rejects_seven_bypasses(self):
+        from tradegate.service import enforcement_arena
+        result = enforcement_arena()
+        self.assertEqual(result["baseline"], "VALID")
+        self.assertEqual((result["passed"], result["total"]), (7, 7))
+        self.assertTrue(all(row["rejected"] for row in result["bypasses"]))
+        self.assertEqual(
+            {row["reason"] for row in result["bypasses"]},
+            {"ACTION_MISMATCH", "RESOURCE_MISMATCH", "AUDIENCE_MISMATCH",
+             "SIGNATURE_INVALID", "POLICY_DRIFT", "AUTHORIZATION_EXPIRED",
+             "REPLAY_DETECTED"},
+        )
+
     def test_ledger_and_anchors_bounded(self):
         for _ in range(110):
             self.service.compile({})

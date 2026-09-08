@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import tempfile
 from collections import OrderedDict, deque
 from dataclasses import replace
 from datetime import datetime, timezone, timedelta
@@ -215,3 +216,49 @@ class Service:
                     'authorization_lease': copy.deepcopy(self.current_lease),
                     'issuer': issuer, 'live_enabled': self.live_enabled,
                     'ledger': copy.deepcopy(list(self.ledger))}
+
+
+def enforcement_arena() -> dict[str, Any]:
+    """Exercise KACHING's local PEP against seven authorization bypass classes."""
+    with tempfile.TemporaryDirectory(prefix='kaching-enforcement-') as tmp:
+        service = Service(issuer_key_path=Path(tmp) / 'issuer.pem')
+        state = service.compile({'mode': 'fixture', 'scenario': 'allow', 'quote': '10'})
+        lease = state.get('authorization_lease')
+        if not isinstance(lease, dict):
+            return {'label': 'DETERMINISTIC AUTHORIZATION FIXTURE', 'baseline': 'NO_LEASE',
+                    'passed': 0, 'total': 7, 'bypasses': []}
+        base = {'lease': lease, 'origin': 'agent', 'action': 'BUY', 'symbol': 'BNBUSDT',
+                'quote': '10', 'audience': 'binance.spot.newOrder'}
+        baseline = service.enforce(base)
+        rows: list[dict[str, Any]] = []
+
+        def record(name: str, result: dict[str, Any], expected: str) -> None:
+            rows.append({'name': name, 'rejected': result.get('valid') is False and result.get('reason') == expected,
+                         'reason': result.get('reason', 'UNKNOWN')})
+
+        record('Amount escalation', service.enforce({**base, 'quote': '10.01'}), 'ACTION_MISMATCH')
+        record('Resource mutation', service.enforce({**base, 'symbol': 'BTCUSDT'}), 'RESOURCE_MISMATCH')
+        record('Audience mutation', service.enforce({**base, 'audience': 'binance.wallet.withdraw'}), 'AUDIENCE_MISMATCH')
+        forged = copy.deepcopy(lease)
+        signature = forged.get('signature', '')
+        forged['signature'] = ('A' if not signature.startswith('A') else 'B') + signature[1:]
+        record('Signature forgery', service.enforce({**base, 'lease': forged}), 'SIGNATURE_INVALID')
+
+        service._issuer()
+        assert service._verifier_obj is not None
+        intent = FinancialIntent('agent', 'BUY', 'BNBUSDT', D('10')).normalized()
+        drift = service._verifier_obj.verify(lease, intent, audience='binance.spot.newOrder',
+                                             current_policy_sha256='0' * 64, consume=False)
+        record('Policy drift', {'valid': drift.valid, 'reason': drift.reason}, 'POLICY_DRIFT')
+        expires = datetime.fromisoformat(str(lease['expires_at']).replace('Z', '+00:00'))
+        expired = service._verifier_obj.verify(lease, intent, audience='binance.spot.newOrder',
+                                               current_policy_sha256=service.compiler.policy.sha256,
+                                               now=expires + timedelta(seconds=1), consume=False)
+        record('Expired lease', {'valid': expired.valid, 'reason': expired.reason}, 'AUTHORIZATION_EXPIRED')
+        first = service.enforce({**base, 'consume': True})
+        second = service.enforce({**base, 'consume': True})
+        replay = second if first.get('valid') is True else first
+        record('Replay', replay, 'REPLAY_DETECTED')
+        return {'label': 'DETERMINISTIC AUTHORIZATION FIXTURE',
+                'baseline': baseline.get('reason', 'UNKNOWN'), 'passed': sum(int(r['rejected']) for r in rows),
+                'total': len(rows), 'bypasses': rows}

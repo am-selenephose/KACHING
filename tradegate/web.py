@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from .service import Service, arena
+from .service import Service, arena, enforcement_arena
 
 ROOT = Path(__file__).resolve().parents[1] / 'ui' / 'dist'
 
@@ -92,6 +92,8 @@ def create_server(port: int = 8890, live_enabled: bool = False, issuer_key_path:
                     return self.respond(200, {'verified': service.verify(payload), 'basis': 'server-retained-original-digest'})
                 if self.path == '/api/arena':
                     return self.respond(200, arena())
+                if self.path == '/api/enforcement-arena':
+                    return self.respond(200, enforcement_arena())
                 if self.path == '/access/v1/evaluation':
                     return self.respond(200, service.evaluate_access(payload))
                 if self.path == '/api/enforce':

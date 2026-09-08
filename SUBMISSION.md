@@ -4,48 +4,68 @@ Public branch: https://github.com/am-selenephos/evidencebound-runtime/tree/hacka
 
 ## Entry requirements checked September 8, 2026
 
-[Official Binance announcement](https://www.binance.com/en/blog/community/8802181509900814931)
-states the deadline is **September 8, 2026, 23:59 UTC** — **September 9, 04:59 PKT**.
+The official Binance Agent OS Mini Hackathon announcement states the deadline is
+**September 8, 2026, 23:59 UTC** — **September 9, 04:59 PKT**.
 
-Follow @Binance and repost the official announcement; reply or quote-repost with
-the Track A video/demo and GitHub link, then complete the survey linked from the
-official announcement. Check personal and regional eligibility directly; the
-announcement lists excluded jurisdictions. No Trade B transaction is required
-by this Track A implementation.
+For Track A: follow `@Binance`, repost the official announcement, then reply or
+quote-repost with the Track A demo/video and GitHub link, and complete the official
+survey. The owner must perform these account-specific actions. Keep any requested
+Binance UID inside the official form; never place it in the public post.
 
-No social post or survey has been submitted by this build process. The owner
-must complete these account-specific actions. Keep UID private to the official
-form if requested; never include it in the public post.
+No social post or survey is marked submitted by the repository itself.
 
-## Recommended post
+## Recommended X post
 
-Track A: KACHING! AI proposes; policy authorizes. Built with Binance Agent OS: live observations, Decimal safe envelopes and verifiable decision receipts. No live execution. Demo attached. #AgentOS #Binance
+```text
+Track A — KACHING! Capability ≠ authorization. Binance state + exchange rules + deterministic policy → ALLOW/REVIEW/BLOCK. ALLOW issues a 30s Ed25519 lease for exact action. Mutated, expired or replayed authority is rejected. No live execution. #AgentOS
 https://github.com/am-selenephos/evidencebound-runtime/tree/hackathon/binance-agent-os-tradegate
+```
 
-Raw characters: 303. X weighted count using a 23-character URL:
-230. One attached demo. Confirm in X's composer.
+Post text is 253 raw characters before the URL; using X's conventional shortened
+URL length of 23 characters gives an approximate weighted count of **277**. Verify
+in X's composer before posting. Attach the demo video to the same reply/quote.
 
 ## Shorter backup
 
-Track A — KACHING! Before an AI can touch money, it must carry proof. Live Binance observations, deterministic policy, tamper detection. No live execution. Demo attached. #AgentOS #Binance
-https://github.com/am-selenephos/evidencebound-runtime/tree/hackathon/binance-agent-os-tradegate
+```text
+Track A — KACHING! Before an AI can touch money, it must carry proof. Deterministic Binance authorization + a short-lived Ed25519 lease. Change the action, tool, policy, signature, time window or replay state and authority is rejected. No live execution. #AgentOS
+```
 
-Raw characters: 285. X weighted count using a 23-character URL:
-212. Confirm in X's composer.
+Add the public GitHub branch link and verify the final count in X's composer.
 
-## Positioning and claim limits
+## What the demo should prove
 
-KACHING governs a proposal through deterministic policy and returns a receipt.
-Signal bots, strategy agents, AI confirmations and portfolio tools are potential
-proposers. The current UI fixes BNBUSDT BUY for the demo; the Python intent model
-is broader. No automatic LLM integration or model-generated live trade is claimed.
+1. real read-only Binance market/account observation and current exchange-contract
+   evidence, without exposing private balance or credentials;
+2. BLOCK/REVIEW return zero authority and no lease;
+3. ALLOW issues `kaching.authorization.v1`, signed with Ed25519;
+4. the exact signed action verifies VALID at the local PEP;
+5. amount escalation, resource mutation, audience mutation, signature forgery,
+   policy drift, expiry and consumed-lease replay are rejected;
+6. neither the PEP nor browser has a live execution route.
 
-The distinguishing combination is the exact safe envelope, zero authorization
-for REVIEW, deterministic remediation, original-anchored receipt verification,
-clear adversarial demonstration and editorial interface. This does not establish
-a previously unknown category or guarantee a top-three finish. Other builders
-also explore deterministic preflight and proof-oriented agents.
+## Positioning
 
-Use the current verification record for technical claims. Do not call SHA-256
-a signature, claim other credential holders cannot bypass the application,
-or imply Binance endorsement.
+KACHING does **not** compete with signal bots, strategy agents, news agents or
+portfolio copilots. Those systems can be proposers. KACHING is the action-level
+authorization boundary beneath them.
+
+The central line is:
+
+> **Capability is not authorization.**
+
+Binance/tool credentials may grant capability. KACHING determines whether this
+particular action is authorized under the observed state and policy, then issues
+portable KACHING authorization evidence only on ALLOW.
+
+## Claim limits
+
+- `POST /access/v1/evaluation` is **AuthZEN-inspired**, not formal conformance.
+- A KACHING Authorization Lease is not a Binance-native token or endorsement.
+- The Ed25519 lease provides issuer-authenticated KACHING authorization evidence;
+  it does not stop unrelated software that independently holds Binance credentials.
+- Replay protection is bounded and in-memory in this hackathon build.
+- ALLOW does not guarantee exchange acceptance, price, profit or safety.
+- The browser and PEP contain **no live execution path**.
+
+Use the latest `docs/VERIFICATION.md` record for test/browser/live-proof claims.

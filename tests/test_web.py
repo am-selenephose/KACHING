@@ -88,6 +88,14 @@ class WebTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(self.request('GET', path)[0], 404)
 
+    def test_enforcement_arena_route_rejects_seven_bypasses(self):
+        status, _, body = self.request('POST', '/api/enforcement-arena', {})
+        self.assertEqual(status, 200)
+        result = json.loads(body)
+        self.assertEqual(result['baseline'], 'VALID')
+        self.assertEqual((result['passed'], result['total']), (7, 7))
+        self.assertTrue(all(row['rejected'] for row in result['bypasses']))
+
     def test_payload_limit(self):
         self.assertEqual(self.request('POST', '/api/compile', {'message': 'x'*20000})[0], 413)
 
