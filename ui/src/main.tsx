@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './style.css';
 import './midnight.css';
 import {formatAmount as amount, admissibleDraft} from './proposal.mjs';
+import {buildEnforcementRequest, leaseCountdown} from './authorization.mjs';
 
 type Receipt = {
   schema: string; proposal_id: string; generated_at: string; mode: 'fixture' | 'live';
@@ -10,13 +11,22 @@ type Receipt = {
   safe_envelope: string | null; verdict: 'ALLOW' | 'REVIEW' | 'BLOCK';
   reasons: string[]; remediation: string[]; checks: Record<string, boolean | null>;
   policy_version: string; policy_sha256: string; decision_sha256: string;
+  evaluated_rules: string[]; determining_rules: string[];
   account_authenticated: boolean; market_source: string;
 };
+type AuthorizationLease = {
+  schema: string; decision_id: string; origin: string; action: string; resource: string;
+  audience: string; requested: string; maximum_authorized: string; intent_sha256: string;
+  policy_version: string; policy_sha256: string; observation_commitment: string;
+  issued_at: string; expires_at: string; nonce: string; issuer_key_fingerprint: string;
+  signature_algorithm: string; signature: string;
+};
+type Issuer = {algorithm: string; public_key: string; fingerprint: string};
 type Event = {timestamp: string; stage: string; proposal_id: string; mode: string; verdict: string};
-type State = {receipt: Receipt | null; verified: boolean; live_enabled: boolean; ledger: Event[]};
+type State = {receipt: Receipt | null; verified: boolean; authorization_lease: AuthorizationLease | null; issuer: Issuer | null; live_enabled: boolean; ledger: Event[]};
 type Arena = {passed: number; total: number; attacks: {name: string; contained: boolean; detail: string}[]};
 const stages = ['Normalize', 'Observe', 'Verify evidence', 'Compile policy', 'Safe envelope', 'Authorize', 'Attest'];
-const empty: State = {receipt: null, verified: false, live_enabled: false, ledger: []};
+const empty: State = {receipt: null, verified: false, authorization_lease: null, issuer: null, live_enabled: false, ledger: []};
 const short = (s: string) => `${s.slice(0, 12)}…${s.slice(-8)}`;
 async function api<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api/${path}`, {
@@ -47,6 +57,9 @@ function App() {
   const [copyStatus, setCopyStatus] = useState('');
   const [connected, setConnected] = useState(false);
   const [reduced, setReduced] = useState(false);
+  const [enforcement, setEnforcement] = useState<{valid: boolean; reason: string} | null>(null);
+  const [mutation, setMutation] = useState<'exact'|'amount'|'resource'|'audience'|'signature'|'replay'>('exact');
+  const [nowMs, setNowMs] = useState(Date.now());
   const mounted = useRef(true);
   const receipt = dirty ? null : state.receipt;
   const suggestedDraft = admissibleDraft(receipt);
@@ -61,6 +74,13 @@ function App() {
     return () => {mounted.current = false; motion.removeEventListener('change', onMotion);};
   }, []);
 
+  useEffect(() => {
+    if (!state.authorization_lease) return;
+    setNowMs(Date.now());
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [state.authorization_lease?.decision_id]);
+
   const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, reduced ? 0 : ms));
   async function perform(task: () => Promise<void>) {
     setBusy(true); setError(''); setCopyStatus('');
@@ -69,7 +89,7 @@ function App() {
   }
   async function compile() {
     await perform(async () => {
-      setState(s => ({...s, receipt: null})); setDirty(false); setIntegrity(''); setDemo('');
+      setState(s => ({...s, receipt: null, authorization_lease: null})); setDirty(false); setIntegrity(''); setDemo(''); setEnforcement(null);
       const next = await api<State>('compile', {mode, scenario, quote, message});
       setState(next); setStep(7);
     });
@@ -87,6 +107,20 @@ function App() {
   }
   async function runArena() {
     await perform(async () => {setArena(null); setArena(await api<Arena>('arena', {}));});
+  }
+  async function runEnforcement() {
+    const lease = state.authorization_lease;
+    if (!lease) return;
+    await perform(async () => {
+      setEnforcement(null);
+      const request = buildEnforcementRequest(lease, mutation);
+      if (mutation === 'replay') {
+        await api<{valid: boolean; reason: string}>('enforce', request);
+        setEnforcement(await api<{valid: boolean; reason: string}>('enforce', request));
+      } else {
+        setEnforcement(await api<{valid: boolean; reason: string}>('enforce', request));
+      }
+    });
   }
   async function judge() {
     await perform(async () => {
@@ -134,12 +168,13 @@ function App() {
     <div className="system-strip" aria-label="System status">
       <span><i className={connected ? 'signal good' : 'signal'}/>{connected ? 'Local kernel connected' : 'Connecting to kernel'}</span>
       <span>{receipt?.mode === 'live' ? 'Binance observation / live' : 'Deterministic fixture'}</span>
-      <span>Account auth / {receipt ? (receipt.account_authenticated ? (receipt.mode === 'fixture' ? 'fixture' : 'verified') : 'unavailable') : 'not observed'}</span>
+      <span>AuthN / {receipt ? (receipt.account_authenticated ? (receipt.mode === 'fixture' ? 'fixture' : 'verified') : 'unavailable') : 'not observed'}</span>
+      <span>AuthZ / {receipt?.verdict || 'not evaluated'}{state.authorization_lease ? ' · signed lease' : ''}</span>
       <span>Policy / kaching-v1</span><span className="execution">No live execution path</span>
     </div>
 
     <div className="toolbar"><nav aria-label="Workspace">
-      {(['deck','arena','ledger'] as const).map((key, i) => <button key={key} className={panel === key ? 'nav active' : 'nav'} aria-pressed={panel === key} onClick={() => setPanel(key)}>{['Command deck','Adversarial arena','Decision ledger'][i]}</button>)}
+      {(['deck','enforcement','arena','ledger'] as const).map((key, i) => <button key={key} className={panel === key ? 'nav active' : 'nav'} aria-pressed={panel === key} onClick={() => setPanel(key)}>{['Command deck','Enforcement lab','Adversarial arena','Decision ledger'][i]}</button>)}
       </nav><button className="judge" onClick={judge} disabled={busy || !connected}>{busy && demo ? 'Judge demo running…' : 'Run judge demo'} <span aria-hidden="true">↗</span></button></div>
     {error && <div role="alert" className="notice error">{error} <button onClick={() => location.reload()}>Reconnect to kernel</button></div>}
     {demo && <div role="status" className="notice">{demo}<small>Fixture playback of completed server checks; stage animation is illustrative.</small></div>}
@@ -177,13 +212,16 @@ function App() {
         <div className="section-label"><span>03 / Evidence</span><span>{receipt ? 'Sealed' : 'Pending'}</span></div>
         <h2 id="receipt-title">Proof receipt</h2><p className="section-intro">A decision you can inspect.<br/>An original you can compare.</p>
         <dl className="receipt-fields"><div><dt>Action</dt><dd>{receipt ? `${receipt.action} ${receipt.symbol}` : '—'}</dd></div><div><dt>Requested</dt><dd>{amount(receipt?.requested)} USDT</dd></div><div><dt>Authorized</dt><dd>{amount(receipt?.authorized)} USDT</dd></div><div><dt>Verdict</dt><dd>{receipt?.verdict || 'Awaiting proposal'}</dd></div><div><dt>Observation</dt><dd>{receipt ? (receipt.mode === 'fixture' ? 'Deterministic fixture' : receipt.market_source) : 'Not observed'}</dd></div><div><dt>Policy</dt><dd>kaching-v1</dd></div></dl>
-        {receipt && <><div className="reasons"><span>Why</span>{receipt.reasons.map(reason => <p key={reason}>{reason.replaceAll('_',' ').toLowerCase()}</p>)}</div><div className="hash"><span>Policy SHA-256</span><code title={receipt.policy_sha256}>{short(receipt.policy_sha256)}</code></div><div className="hash"><span>Decision SHA-256</span><code title={receipt.decision_sha256}>{short(receipt.decision_sha256)}</code></div><details><summary>Inspect exact evidence identifiers</summary><code>{receipt.proposal_id}<br/>{receipt.generated_at}<br/>{receipt.policy_sha256}<br/>{receipt.decision_sha256}</code></details></>}
+        {receipt && <><div className="reasons"><span>Why</span>{receipt.reasons.map(reason => <p key={reason}>{reason.replaceAll('_',' ').toLowerCase()}</p>)}</div><div className="rules"><span>Determining rules</span><p>{receipt.determining_rules?.join(' · ') || '—'}</p></div><div className="hash"><span>Policy SHA-256</span><code title={receipt.policy_sha256}>{short(receipt.policy_sha256)}</code></div><div className="hash"><span>Decision SHA-256</span><code title={receipt.decision_sha256}>{short(receipt.decision_sha256)}</code></div><details><summary>Inspect exact evidence identifiers</summary><code>{receipt.proposal_id}<br/>{receipt.generated_at}<br/>{receipt.policy_sha256}<br/>{receipt.decision_sha256}</code></details></>}
+        {state.authorization_lease && <div className="authorization-lease" aria-label="KACHING authorization lease"><div className="lease-kicker">Authorization lease · Ed25519 verified instrument</div><h3>{state.authorization_lease.action} {state.authorization_lease.resource}</h3><dl><div><dt>Ceiling</dt><dd>{amount(state.authorization_lease.maximum_authorized)} USDT</dd></div><div><dt>Audience</dt><dd>{state.authorization_lease.audience}</dd></div><div><dt>Valid for</dt><dd>{leaseCountdown(state.authorization_lease, nowMs)}</dd></div><div><dt>Issuer</dt><dd><code>{short(state.authorization_lease.issuer_key_fingerprint)}</code></dd></div><div><dt>Signature</dt><dd>Ed25519 · bound</dd></div></dl><button type="button" onClick={() => setPanel('enforcement')}>Open enforcement lab ↗</button></div>}
         <div className="integrity" role="status">{integrity || (receipt && state.verified ? '✓ Original digest retained by local kernel' : 'No receipt to verify')}</div>
         <div className="receipt-actions"><button onClick={() => verify()} disabled={!receipt || busy}>Verify receipt <span aria-hidden="true">↗</span></button><button onClick={() => verify(true)} disabled={!receipt || busy}>Tamper copy <span aria-hidden="true">↗</span></button><button disabled={!receipt || busy} onClick={async () => {try {await navigator.clipboard.writeText(JSON.stringify(receipt, null, 2)); setCopyStatus('Sanitized receipt copied.');} catch {setCopyStatus('Clipboard unavailable. Use the receipt download.');}}}>Copy sanitized receipt <span aria-hidden="true">↗</span></button>
         {receipt && <a download={`kaching-${receipt.proposal_id}.json`} href={`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(receipt,null,2))}`}>Download public receipt ↗</a>}</div><small role="status">{copyStatus}</small>
         <p className="receipt-note">SHA-256 integrity against a retained original. Not an issuer signature.</p>
       </section>
     </div>}
+
+    {panel === 'enforcement' && <section className="enforcement-lab"><div className="section-label"><span>Policy enforcement point / local simulation</span><span>No execution capability</span></div><h2>Enforcement Lab</h2><p>Present the signed lease with an exact proposed action. Mutations are rejected before any financial tool could receive authority.</p>{state.authorization_lease ? <div className="enforcement-grid"><div className="lease-summary"><span>Signed authorization</span><strong>{state.authorization_lease.action} {state.authorization_lease.resource}</strong><p>≤ {amount(state.authorization_lease.maximum_authorized)} USDT · {state.authorization_lease.audience}</p><code>{short(state.authorization_lease.issuer_key_fingerprint)}</code><p>Expires: {leaseCountdown(state.authorization_lease, nowMs)}</p></div><div className="enforcement-controls"><label htmlFor="mutation">Attempt</label><select id="mutation" value={mutation} disabled={busy} onChange={e => {setMutation(e.target.value as typeof mutation); setEnforcement(null);}}><option value="exact">Exact signed action</option><option value="amount">Escalate amount by 0.01 USDT</option><option value="resource">Change resource / symbol</option><option value="audience">Use against another tool</option><option value="signature">Modify signature</option><option value="replay">Consume then replay same lease</option></select><button type="button" onClick={() => void runEnforcement()} disabled={busy}>{busy ? 'Verifying…' : 'Verify at enforcement boundary'} ↗</button>{enforcement && <div role="status" className={`enforcement-result ${enforcement.valid ? 'pass' : 'fail'}`}><strong>{enforcement.valid ? 'VALID' : 'REJECTED'}</strong><span>{enforcement.reason.replaceAll('_',' ')}</span></div>}</div></div> : <div className="empty-state">Compile the deterministic <strong>Within policy / ALLOW</strong> fixture to issue a 30-second signed authorization lease.</div>}<p className="boundary-note">This lab verifies KACHING-issued authority only. It never calls a Binance order, transfer, or withdrawal endpoint.</p></section>}
 
     {panel === 'arena' && <section className="arena"><div className="section-label">Deterministic adversarial fixture</div><div className="arena-heading"><h2>Prove the boundary.</h2><button onClick={runArena} disabled={busy}>{busy ? 'Evaluating attacks…' : 'Run five attacks'} ↗</button></div><p>Each test invokes the real compiler or receipt verifier with controlled inputs. No live Binance observations or financial orders.</p>{arena ? <><div className="arena-score">{arena.passed}<span> / {arena.total} contained</span></div>{arena.attacks.map((attack, i) => <article key={attack.name}><span className="index">0{i+1}</span><div><h3>{attack.name}</h3><p>{attack.detail}</p></div><span className={attack.contained ? 'pass' : 'fail'}>{attack.contained ? '✓ Contained' : '× Failed'}</span></article>)}</> : <div className="empty-state">The boundary has not been tested in this session.</div>}</section>}
 
