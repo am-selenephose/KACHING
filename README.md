@@ -1,57 +1,78 @@
 # KACHING!
 
+<div align="center">
+
 ## Before an AI can touch money, it must carry proof.
 
-KACHING! is a local, proof-carrying financial-action firewall built for the
-Binance Agent OS Track A challenge. An agent may propose an action, but it does
-not receive authority merely because it can reach a financial tool.
+**Capability is not authorization.**
+
+KACHING! is a proof-carrying financial authorization kernel for AI agents.
+Models may propose actions; only deterministic policy can create authority.
+
+**[Open the Proof Explorer ↗](https://kaching-proof.miniup.app)** · **[Watch the 98-second demo ↗](https://x.com/Selenephose/status/2097465082141905231)** · **[Read verification ↗](docs/VERIFICATION.md)**
+
+</div>
+
+---
+
+### The 10-second version
 
 ```text
-UNTRUSTED FINANCIAL INTENT
+AI proposes a financial action
             │
             ▼
-          KACHING!
-   read-only observations
-   deterministic policy rules
-   exchange-contract checks
-   Decimal safe-action envelope
+         KACHING!
+  evidence + exchange rules + policy
             │
      ┌──────┼──────┐
      ▼      ▼      ▼
    BLOCK  REVIEW  ALLOW
-   0 USDT  0 USDT   │
-                    ▼
-          Ed25519 Authorization Lease
-                    │
-                    ▼
-             local verifier
-             VALID / REJECTED
+   0 USDT  0 USDT    │
+                      ▼
+            Ed25519 Authorization Lease
+                      │
+                      ▼
+          exact action → VALID
+          changed / expired / replayed → REJECTED
 ```
 
-BLOCK and REVIEW authorize zero and issue no lease. Only ALLOW can issue a
-short-lived lease bound to the exact origin, action, resource, requested amount,
-tool audience, policy hash and observation commitment. The verifier checks that
-signed authority before returning VALID. It does not submit a trade.
+**Authorization is an artifact, not an opinion.** An agent having credentials, a tool, or a persuasive reason does not mean a specific financial action is authorized. KACHING makes that authority explicit, signed, short-lived, and bound to the exact action.
+
+### Proof at a glance
+
+| Surface | Verified submission evidence |
+|---|---:|
+| Python authorization tests | **77 / 77** |
+| UI tests | **8 / 8** |
+| Policy/evidence attacks | **5 / 5 contained** |
+| Authorization bypasses | **7 / 7 rejected** |
+| Rendered Chromium QA | **26 / 26 checks** |
+| Responsive workspace/viewport QA | **20 / 20** |
+| Live execution from browser | **None** |
+
+The seven authorization bypass classes are amount escalation, resource mutation, audience mutation, signature forgery, policy drift, expired authority, and consumed-lease replay. The exact signed action verifies **VALID**; each tested mutation is **REJECTED** with a specific reason.
+
+### 30-second judge path
+
+1. **[Open the Proof Explorer](https://kaching-proof.miniup.app)** — no install, wallet, or credentials.
+2. Switch **BLOCK → REVIEW → ALLOW** and inspect the authorized amount and determining rules.
+3. Inspect the recorded Ed25519 Authorization Lease: exact action, resource, ceiling, audience, policy and evidence commitment.
+4. Read the **7 / 7** bypass rejection reasons.
+5. For the real kernel, run **Run judge demo** locally or inspect the source/tests below.
+
+> **Hosted-demo boundary:** the public Proof Explorer is a static presentation of deterministic fixture evidence exported by the real KACHING kernel. It cannot place a trade, access a wallet, or read credentials. The authoritative implementation lives in this repository.
 
 ![KACHING! command deck](docs/screenshots/01-command-deck.png)
 
-## What the demo proves
+### Why KACHING exists
 
-- A 10.00 USDT BLOCK fixture returns zero authority and no lease.
-- A 100.00 USDT REVIEW fixture exposes a 24.37 USDT safe envelope, still returns
-  zero authority, and requires a newly compiled proposal.
-- A 10.00 USDT ALLOW fixture issues a 30-second
-  `kaching.authorization.v1` Ed25519 lease.
-- The exact signed action verifies VALID.
-- Amount, resource, audience, signature, policy, expiry and consumed-lease replay
-  mutations are rejected: **7 / 7** in the deterministic bypass gauntlet.
-- A separate deterministic suite contains **5 / 5** policy and evidence attacks.
-- Receipt tampering fails against the process-retained original digest.
+Most agent stacks answer *can this model call the tool?* KACHING answers the harder question: **is this exact action authorized right now under this policy and this evidence?**
 
-The browser QA record is tied to exact UI source hashes and covers 26 checks,
-20 responsive workspace/viewport combinations, seven 1920×1080 captures, reduced
-motion, keyboard focus, private-label scanning, and zero recorded console or
-network failures. See [the verification record](docs/VERIFICATION.md).
+BLOCK and REVIEW issue zero authority. Only ALLOW can issue a short-lived `kaching.authorization.v1` Ed25519 lease bound to origin, action, resource, requested amount, maximum authorized amount, target audience, policy hash and observation commitment. The verifier checks that signed authority before returning VALID.
+
+KACHING does **not** pick trades and does **not** claim exchange execution or profit. It is the boundary between an untrusted proposal and a permitted financial action.
+
+For a compact walkthrough, see **[docs/JUDGE_PATH.md](docs/JUDGE_PATH.md)**. For exact limitations, read **[SECURITY.md](SECURITY.md)**.
 
 ## Run locally
 
