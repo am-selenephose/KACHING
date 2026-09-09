@@ -5,15 +5,18 @@ import argparse
 import hashlib
 import json
 import subprocess
+import sys
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from tradegate.service import Service, arena, enforcement_arena
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tradegate.service import Service, arena, enforcement_arena
 DEFAULT_OUTPUT = ROOT / 'judge' / 'public' / 'evidence.json'
 
 

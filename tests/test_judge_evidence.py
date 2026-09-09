@@ -1,3 +1,5 @@
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,6 +24,18 @@ class JudgeEvidenceTests(unittest.TestCase):
         self.assertEqual(evidence['enforcement_arena']['total'], 7)
         self.assertIn('signature', evidence['lease_specimen'])
         self.assertNotIn('private', str(evidence).lower())
+
+    def test_exporter_cli_runs_from_repo_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'evidence.json'
+            result = subprocess.run(
+                [sys.executable, 'scripts/export_judge_evidence.py', '--output', str(output)],
+                cwd=Path(__file__).resolve().parents[1],
+                text=True, capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(output.is_file())
+            self.assertIn('JUDGE_EVIDENCE_SHA256=', result.stdout)
 
 
 if __name__ == '__main__':

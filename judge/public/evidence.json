@@ -1,0 +1,327 @@
+{
+  "enforcement_arena": {
+    "baseline": "VALID",
+    "bypasses": [
+      {
+        "name": "Amount escalation",
+        "reason": "ACTION_MISMATCH",
+        "rejected": true
+      },
+      {
+        "name": "Resource mutation",
+        "reason": "RESOURCE_MISMATCH",
+        "rejected": true
+      },
+      {
+        "name": "Audience mutation",
+        "reason": "AUDIENCE_MISMATCH",
+        "rejected": true
+      },
+      {
+        "name": "Signature forgery",
+        "reason": "SIGNATURE_INVALID",
+        "rejected": true
+      },
+      {
+        "name": "Policy drift",
+        "reason": "POLICY_DRIFT",
+        "rejected": true
+      },
+      {
+        "name": "Expired lease",
+        "reason": "AUTHORIZATION_EXPIRED",
+        "rejected": true
+      },
+      {
+        "name": "Replay",
+        "reason": "REPLAY_DETECTED",
+        "rejected": true
+      }
+    ],
+    "label": "DETERMINISTIC AUTHORIZATION FIXTURE",
+    "passed": 7,
+    "total": 7
+  },
+  "lease_specimen": {
+    "action": "BUY",
+    "audience": "binance.spot.newOrder",
+    "decision_id": "3328c7ec13c6e67a",
+    "expires_at": "2026-09-09T01:07:42.853102+00:00",
+    "intent_sha256": "9712a8f890f285cdeeb2379c214265554ba73e3931608fd4be438c45888a0335",
+    "issued_at": "2026-09-09T01:07:12.853102+00:00",
+    "issuer_key_fingerprint": "4be8055dd0cf1824385faa980a8915f661f9867819c55c207bf0af93b29fcb49",
+    "maximum_authorized": "10",
+    "nonce": "fa14d5f555c2f33a77f35fa1beb0dc35",
+    "observation_commitment": "4706b3bfd8521acfd0c710d775ba0523cc544edd13376c332a97b268db0ca5d6",
+    "origin": "agent",
+    "policy_sha256": "b69dd27694b0e5ed40583bc32334f0b7623bf59c8101164e3851522fbf5fcd9e",
+    "policy_version": "kaching-v1",
+    "requested": "10",
+    "resource": "BNBUSDT",
+    "schema": "kaching.authorization.v1",
+    "signature": "Z73648rR8LRxpWDY10tUGXQtWHAsw1kpLUvgu5h5soz3c/FAdLe+PCfRCaKMKLUiUptzIpY1KAKM/NgK73enAg==",
+    "signature_algorithm": "Ed25519"
+  },
+  "meta": {
+    "disclaimer": "RECORDED DETERMINISTIC FIXTURES \u00b7 NO WALLET \u00b7 NO MONEY MOVED \u00b7 CORE KERNEL LIVES IN REPO",
+    "live_execution": false,
+    "mode": "fixture",
+    "recorded_at": "2026-09-09T01:07:12.853384+00:00",
+    "schema": "kaching.judge-evidence.v1",
+    "source_commit": "e62d34444b2c39e8904d506ebd7134057db94749"
+  },
+  "policy_arena": {
+    "attacks": [
+      {
+        "contained": true,
+        "detail": "100 USDT exceeds the 24.37 USDT fixture envelope.",
+        "name": "Oversized action"
+      },
+      {
+        "contained": true,
+        "detail": "Untrusted metadata cannot modify policy or verdict.",
+        "name": "Prompt-policy override"
+      },
+      {
+        "contained": true,
+        "detail": "Changed verdict fails against the retained original digest.",
+        "name": "Receipt tampering"
+      },
+      {
+        "contained": true,
+        "detail": "Unavailable authentication fails closed.",
+        "name": "Missing account authentication"
+      },
+      {
+        "contained": true,
+        "detail": "Both stale time and non-finite price fail closed.",
+        "name": "Stale / malformed market state"
+      }
+    ],
+    "label": "DETERMINISTIC ADVERSARIAL FIXTURE",
+    "mode": "fixture",
+    "passed": 5,
+    "total": 5
+  },
+  "proof_counts": {
+    "authorization_bypasses": "7/7",
+    "browser_checks": 26,
+    "policy_attacks": "5/5",
+    "python_tests": 77,
+    "responsive_checks": 20,
+    "ui_tests": 8
+  },
+  "scenarios": {
+    "allow": {
+      "authorization_lease": {
+        "action": "BUY",
+        "audience": "binance.spot.newOrder",
+        "decision_id": "3328c7ec13c6e67a",
+        "expires_at": "2026-09-09T01:07:42.853102+00:00",
+        "intent_sha256": "9712a8f890f285cdeeb2379c214265554ba73e3931608fd4be438c45888a0335",
+        "issued_at": "2026-09-09T01:07:12.853102+00:00",
+        "issuer_key_fingerprint": "4be8055dd0cf1824385faa980a8915f661f9867819c55c207bf0af93b29fcb49",
+        "maximum_authorized": "10",
+        "nonce": "fa14d5f555c2f33a77f35fa1beb0dc35",
+        "observation_commitment": "4706b3bfd8521acfd0c710d775ba0523cc544edd13376c332a97b268db0ca5d6",
+        "origin": "agent",
+        "policy_sha256": "b69dd27694b0e5ed40583bc32334f0b7623bf59c8101164e3851522fbf5fcd9e",
+        "policy_version": "kaching-v1",
+        "requested": "10",
+        "resource": "BNBUSDT",
+        "schema": "kaching.authorization.v1",
+        "signature": "Z73648rR8LRxpWDY10tUGXQtWHAsw1kpLUvgu5h5soz3c/FAdLe+PCfRCaKMKLUiUptzIpY1KAKM/NgK73enAg==",
+        "signature_algorithm": "Ed25519"
+      },
+      "issuer": {
+        "algorithm": "Ed25519",
+        "fingerprint": "4be8055dd0cf1824385faa980a8915f661f9867819c55c207bf0af93b29fcb49",
+        "public_key": "rVDxnBEzQxw48tUV38NvEduSMaD41NmqRt71IyzW9nk="
+      },
+      "receipt": {
+        "account_authenticated": true,
+        "action": "BUY",
+        "authorized": "10",
+        "checks": {
+          "24h movement": true,
+          "Account authentication": true,
+          "Balance fraction": true,
+          "Cash buffer": true,
+          "Exchange contract": true,
+          "Market integrity": true,
+          "Spread": true,
+          "Visible depth": true
+        },
+        "decision_sha256": "642d5b3359177e202563bd22dd9df85545ccb428102374dd383b943546b60796",
+        "determining_rules": [
+          "KCH-AUTH-001",
+          "KCH-ACTION-001",
+          "KCH-MARKET-001",
+          "KCH-EXCHANGE-001",
+          "KCH-SPREAD-001",
+          "KCH-MOVE-001",
+          "KCH-DEPTH-001",
+          "KCH-CASH-001",
+          "KCH-NOTIONAL-001"
+        ],
+        "envelope_visibility": "public-fixture",
+        "evaluated_rules": [
+          "KCH-AUTH-001",
+          "KCH-ACTION-001",
+          "KCH-MARKET-001",
+          "KCH-EXCHANGE-001",
+          "KCH-SPREAD-001",
+          "KCH-MOVE-001",
+          "KCH-DEPTH-001",
+          "KCH-CASH-001",
+          "KCH-NOTIONAL-001"
+        ],
+        "generated_at": "2026-09-08T12:00:00+00:00",
+        "market_source": "fixture",
+        "metrics": {
+          "abs_24h_move_pct": "2.5",
+          "spread_bps": "1.3332"
+        },
+        "mode": "fixture",
+        "observation_commitment": "4706b3bfd8521acfd0c710d775ba0523cc544edd13376c332a97b268db0ca5d6",
+        "origin": "agent",
+        "policy_sha256": "b69dd27694b0e5ed40583bc32334f0b7623bf59c8101164e3851522fbf5fcd9e",
+        "policy_version": "kaching-v1",
+        "proposal_id": "3328c7ec13c6e67a",
+        "reasons": [
+          "ALL_CHECKS_PASSED"
+        ],
+        "remediation": [
+          "Policy permits this proposal. This build does not execute live orders."
+        ],
+        "requested": "10",
+        "safe_envelope": "24.37",
+        "schema": "kaching.receipt.v1",
+        "symbol": "BNBUSDT",
+        "verdict": "ALLOW"
+      },
+      "verified": true
+    },
+    "block": {
+      "authorization_lease": null,
+      "issuer": null,
+      "receipt": {
+        "account_authenticated": true,
+        "action": "BUY",
+        "authorized": "0",
+        "checks": {
+          "24h movement": true,
+          "Account authentication": true,
+          "Balance fraction": false,
+          "Cash buffer": false,
+          "Exchange contract": true,
+          "Market integrity": true,
+          "Spread": true,
+          "Visible depth": true
+        },
+        "decision_sha256": "10b6c836356de91809c46bcfbe971a8fb12405041babee198e962dceff1e7f9a",
+        "determining_rules": [
+          "KCH-CASH-001",
+          "KCH-NOTIONAL-001"
+        ],
+        "envelope_visibility": "public-fixture",
+        "evaluated_rules": [
+          "KCH-AUTH-001",
+          "KCH-ACTION-001",
+          "KCH-MARKET-001",
+          "KCH-EXCHANGE-001",
+          "KCH-SPREAD-001",
+          "KCH-MOVE-001",
+          "KCH-DEPTH-001",
+          "KCH-CASH-001",
+          "KCH-NOTIONAL-001"
+        ],
+        "generated_at": "2026-09-08T12:00:00+00:00",
+        "market_source": "fixture",
+        "metrics": {
+          "abs_24h_move_pct": "2.5",
+          "spread_bps": "1.3332"
+        },
+        "mode": "fixture",
+        "observation_commitment": "b0f8b6ccb2a32da990912aaecdce7a89df9bcd7e37a416295252f341a0db584e",
+        "origin": "agent",
+        "policy_sha256": "b69dd27694b0e5ed40583bc32334f0b7623bf59c8101164e3851522fbf5fcd9e",
+        "policy_version": "kaching-v1",
+        "proposal_id": "dae35fd03833a1f2",
+        "reasons": [
+          "CASH_BUFFER_BREACH",
+          "NO_SAFE_NOTIONAL"
+        ],
+        "remediation": [
+          "Restore the required cash buffer before proposing a buy.",
+          "Restore sufficient account funding or have the owner explicitly revise policy, then compile again."
+        ],
+        "requested": "10",
+        "safe_envelope": "0",
+        "schema": "kaching.receipt.v1",
+        "symbol": "BNBUSDT",
+        "verdict": "BLOCK"
+      },
+      "verified": true
+    },
+    "review": {
+      "authorization_lease": null,
+      "issuer": null,
+      "receipt": {
+        "account_authenticated": true,
+        "action": "BUY",
+        "authorized": "0",
+        "checks": {
+          "24h movement": true,
+          "Account authentication": true,
+          "Balance fraction": false,
+          "Cash buffer": false,
+          "Exchange contract": true,
+          "Market integrity": true,
+          "Spread": true,
+          "Visible depth": true
+        },
+        "decision_sha256": "6884997b2e8e208da905ec50913c5c1a6ac4caa3128fc85986f30fe6c0328bf7",
+        "determining_rules": [
+          "KCH-NOTIONAL-001"
+        ],
+        "envelope_visibility": "public-fixture",
+        "evaluated_rules": [
+          "KCH-AUTH-001",
+          "KCH-ACTION-001",
+          "KCH-MARKET-001",
+          "KCH-EXCHANGE-001",
+          "KCH-SPREAD-001",
+          "KCH-MOVE-001",
+          "KCH-DEPTH-001",
+          "KCH-CASH-001",
+          "KCH-NOTIONAL-001"
+        ],
+        "generated_at": "2026-09-08T12:00:00+00:00",
+        "market_source": "fixture",
+        "metrics": {
+          "abs_24h_move_pct": "2.5",
+          "spread_bps": "1.3332"
+        },
+        "mode": "fixture",
+        "observation_commitment": "7f120b10f92737a01c517a647967d5954cfa245bf9dc11bdc8a8c79fc635bb96",
+        "origin": "agent",
+        "policy_sha256": "b69dd27694b0e5ed40583bc32334f0b7623bf59c8101164e3851522fbf5fcd9e",
+        "policy_version": "kaching-v1",
+        "proposal_id": "cb45abedbe682768",
+        "reasons": [
+          "REQUEST_EXCEEDS_SAFE_ENVELOPE"
+        ],
+        "remediation": [
+          "Reduce requested size to at most 24.37 USDT and compile a new proposal."
+        ],
+        "requested": "100",
+        "safe_envelope": "24.37",
+        "schema": "kaching.receipt.v1",
+        "symbol": "BNBUSDT",
+        "verdict": "REVIEW"
+      },
+      "verified": true
+    }
+  }
+}
