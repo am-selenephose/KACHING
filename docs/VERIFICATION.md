@@ -84,6 +84,10 @@ The seven rejected classes and server reasons were:
 
 These are controlled fixture tests, not a security certification.
 
+## Submission-time snapshot
+
+The comparison snapshot for the submitted project is `052af0841e17596958953f038c7b782ad4defe74` (`052af084`). It was committed before the Track A deadline. Later commits are judge-access, presentation, reproducibility, mirror, and broken-link hardening; they are not used to rewrite the historical submission evidence below.
+
 ## Post-submission judge-access polish
 
 After the Track A deadline, the repository received **presentation and
@@ -97,22 +101,20 @@ Current judge-access surfaces:
 - public source mirror: `https://gitlab.com/am.statementforge/kaching`;
 - submitted GitHub source URL: `https://github.com/am-selenephos/KACHING` (the owner account is currently flagged by GitHub and returns 404 to unauthenticated requests);
 - public static Proof Explorer: `https://kaching-proof.miniup.app`;
-- direct repository-hosted 98-second MP4:
-  `https://gitlab.com/am.statementforge/kaching/-/raw/main/docs/demo/KACHING-98s.mp4`;
-- original public Track A post:
-  `https://x.com/Selenephose/status/2097465082141905231`;
+- official public 98-second Track A video + submission post:
+  `https://x.com/Selenephose/status/2097472059890905444`;
+- local fallback copy of the same 98-second demo artifact: `docs/demo/KACHING-98s.mp4`;
 - one-command deterministic verification: `./scripts/judge_verify.sh`;
 - machine-readable fixture evidence: `judge/public/evidence.json`.
 
 The hosted Proof Explorer is static, secret-free fixture presentation. It cannot
 access a wallet, read exchange credentials, place orders, transfer funds or
 withdraw funds. The authoritative Python implementation remains in this
-repository. The direct MP4 link is provided so video review does not depend on an
-X login or embed working for the reviewer.
+repository. The official X post is now the primary judge-facing video because it is the actual submitted post. The repository-retained MP4 remains a fallback artifact if X playback is unavailable.
 
 The current repository regression contains **79 Python tests total** (the
 original 77 product tests plus 2 judge-evidence/export regression tests), **8 UI
-tests**, and **5 judge-surface tests**. The original 77/8 product-test counts in
+tests**, and **7 judge-surface tests**. The original 77/8 product-test counts in
 this record remain the historically measured submission evidence rather than
 being retroactively rewritten.
 
@@ -242,9 +244,8 @@ See [SECURITY.md](../SECURITY.md) for the complete claim boundary.
 
 ## External submission handoff
 
-A final public Track A post is now externally addressable at:
-`https://x.com/Selenephose/status/2097465082141905231`. The repository also
-contains the 98-second MP4 and exposes the direct raw-file URL above.
+The actual public Track A video/submission post is externally addressable at:
+`https://x.com/Selenephose/status/2097472059890905444`. It contains the 98-second video and the submitted GitHub link. The repository also retains the same 98-second MP4 as a fallback artifact.
 
 The owner reports that the official survey returned a submitted/check-mark
 confirmation. That account-specific survey receipt is not stored as a public,

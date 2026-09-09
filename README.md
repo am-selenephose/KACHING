@@ -9,7 +9,11 @@
 KACHING! is a proof-carrying financial authorization kernel for AI agents.
 Models may propose actions; only deterministic policy can create authority.
 
-**[Open the Proof Explorer ↗](https://kaching-proof.miniup.app)** · **[Watch the 98-second demo ↗](https://gitlab.com/am.statementforge/kaching/-/raw/main/docs/demo/KACHING-98s.mp4)** · **[Track A submission ↗](https://x.com/Selenephose/status/2097465082141905231)** · **[Read verification ↗](docs/VERIFICATION.md)** · **[Public GitLab mirror ↗](https://gitlab.com/am.statementforge/kaching)**
+**[Open the Proof Explorer ↗](https://kaching-proof.miniup.app)** · **[Watch the official 98-second demo ↗](https://x.com/Selenephose/status/2097472059890905444)** · **[Public source mirror ↗](https://gitlab.com/am.statementforge/kaching)** · **[Read verification ↗](docs/VERIFICATION.md)** · **[Submitted GitHub ↗](https://github.com/am-selenephos/KACHING)**
+
+[![Watch the official KACHING! 98-second Track A demo](docs/demo/KACHING-98s-thumbnail.png)](https://x.com/Selenephose/status/2097472059890905444)
+
+**Submission snapshot:** `052af0841e17596958953f038c7b782ad4defe74` — submitted before the deadline. Later commits are limited to judge-access, presentation, reproducibility, and link hardening; the submitted authorization semantics remain the comparison baseline.
 
 </div>
 
@@ -52,6 +56,16 @@ AI proposes a financial action
 
 The seven authorization bypass classes are amount escalation, resource mutation, audience mutation, signature forgery, policy drift, expired authority, and consumed-lease replay. The exact signed action verifies **VALID**; each tested mutation is **REJECTED** with a specific reason.
 
+| Try to change the authority | KACHING verifier |
+|---|---|
+| Increase the amount | **REJECTED — `ACTION_MISMATCH`** |
+| Change the symbol/resource | **REJECTED — `RESOURCE_MISMATCH`** |
+| Redirect the audience | **REJECTED — `AUDIENCE_MISMATCH`** |
+| Forge the signature | **REJECTED — `SIGNATURE_INVALID`** |
+| Change policy after issuance | **REJECTED — `POLICY_DRIFT`** |
+| Reuse expired authority | **REJECTED — `AUTHORIZATION_EXPIRED`** |
+| Replay a consumed lease | **REJECTED — `REPLAY_DETECTED`** |
+
 Machine-readable fixture evidence: **[judge/public/evidence.json](judge/public/evidence.json)**.
 
 ### 30-second judge path
@@ -81,7 +95,7 @@ For a compact walkthrough, see **[docs/JUDGE_PATH.md](docs/JUDGE_PATH.md)**. For
 Requirements: Python 3.11+, Node 22.12+ (or Node 24), and npm.
 
 ```bash
-git clone https://github.com/am-selenephos/KACHING.git
+git clone https://gitlab.com/am.statementforge/kaching.git
 cd KACHING
 python -m venv .venv
 source .venv/bin/activate
@@ -163,7 +177,7 @@ git diff --check
 
 The current repository regression contains **79 Python unittest cases total**
 (**77 product tests + 2 judge-evidence/export regression tests**), **8 UI tests**,
-and **5 judge-surface tests**. The dated [verification record](docs/VERIFICATION.md)
+and **7 judge-surface tests**. The dated [verification record](docs/VERIFICATION.md)
 distinguishes original submission evidence from post-submission judge-access
 polish, rendered-browser evidence, repository state and external gates. A local
 pass is not a GitHub Actions pass.

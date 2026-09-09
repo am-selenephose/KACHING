@@ -21,9 +21,10 @@ type Evidence = {
 
 const SOURCE = 'https://gitlab.com/am.statementforge/kaching';
 const SUBMITTED_SOURCE = 'https://github.com/am-selenephos/KACHING';
-const VIDEO = 'https://gitlab.com/am.statementforge/kaching/-/raw/main/docs/demo/KACHING-98s.mp4';
-const SUBMISSION = 'https://x.com/Selenephose/status/2097465082141905231';
+const VIDEO = 'https://x.com/Selenephose/status/2097472059890905444';
+const SUBMISSION = 'https://x.com/Selenephose/status/2097472059890905444';
 const VERIFY = `${SOURCE}/-/blob/main/docs/VERIFICATION.md`;
+const SUBMISSION_SNAPSHOT = '052af0841e17596958953f038c7b782ad4defe74';
 const short = (value?: string) => !value ? '—' : value.length < 30 ? value : `${value.slice(0, 14)}…${value.slice(-10)}`;
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
         <a href={VIDEO}>Watch the 98-second demo ↗</a>
       </div>
       <div className="boundary">RECORDED DETERMINISTIC FIXTURES · NO WALLET · NO MONEY MOVED · CORE KERNEL LIVES IN REPO</div>
+      <div className="snapshot-note"><strong>SUBMISSION SNAPSHOT</strong><code>{SUBMISSION_SNAPSHOT.slice(0, 8)}</code><span>captured before the deadline · later commits are judge-access / presentation hardening</span></div>
     </section>
 
     {error && <div className="error">{error}</div>}
