@@ -5,11 +5,13 @@
 ## Fastest path
 
 1. Open the hosted **Proof Explorer**: `https://kaching-proof.miniup.app`.
-2. Switch **BLOCK → REVIEW → ALLOW**.
-3. Observe that BLOCK and REVIEW authorize **0.00 USDT** and issue no lease.
-4. On ALLOW, inspect the recorded Ed25519 Authorization Lease bound to the exact action, resource, amount ceiling, audience, policy and evidence commitment.
-5. Read the enforcement baseline: **exact action → VALID**.
-6. Read the seven recorded bypass results: amount, resource, audience, signature, policy, expiry and replay are **REJECTED**.
+2. Optional direct video: `https://gitlab.com/am.statementforge/kaching/-/raw/main/docs/demo/KACHING-98s.mp4`.
+3. The original Track A post remains: `https://x.com/Selenephose/status/2097465082141905231`.
+4. Switch **BLOCK → REVIEW → ALLOW**.
+5. Observe that BLOCK and REVIEW authorize **0.00 USDT** and issue no lease.
+6. On ALLOW, inspect the recorded Ed25519 Authorization Lease bound to the exact action, resource, amount ceiling, audience, policy and evidence commitment.
+7. Read the enforcement baseline: **exact action → VALID**.
+8. Read the seven recorded bypass results: amount, resource, audience, signature, policy, expiry and replay are **REJECTED**.
 
 ## What is live vs recorded
 
@@ -23,6 +25,14 @@ The authoritative implementation is this repository:
 - Machine-readable submission verification: `docs/VERIFICATION.md`
 
 ## Reproduce the real kernel
+
+After dependencies are installed, the quickest verification is:
+
+```bash
+./scripts/judge_verify.sh
+```
+
+Or launch the full command deck manually:
 
 ```bash
 git clone https://github.com/am-selenephos/KACHING.git

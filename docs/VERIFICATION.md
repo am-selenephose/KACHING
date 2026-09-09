@@ -84,6 +84,38 @@ The seven rejected classes and server reasons were:
 
 These are controlled fixture tests, not a security certification.
 
+## Post-submission judge-access polish
+
+After the Track A deadline, the repository received **presentation and
+reproducibility-only** changes so a judge can inspect the already-built KACHING
+behavior with less setup friction. These changes do **not** add a live execution
+path or change the authorization-policy semantics described by the submission
+evidence above.
+
+Current judge-access surfaces:
+
+- public source mirror: `https://gitlab.com/am.statementforge/kaching`;
+- submitted GitHub source URL: `https://github.com/am-selenephos/KACHING` (the owner account is currently flagged by GitHub and returns 404 to unauthenticated requests);
+- public static Proof Explorer: `https://kaching-proof.miniup.app`;
+- direct repository-hosted 98-second MP4:
+  `https://gitlab.com/am.statementforge/kaching/-/raw/main/docs/demo/KACHING-98s.mp4`;
+- original public Track A post:
+  `https://x.com/Selenephose/status/2097465082141905231`;
+- one-command deterministic verification: `./scripts/judge_verify.sh`;
+- machine-readable fixture evidence: `judge/public/evidence.json`.
+
+The hosted Proof Explorer is static, secret-free fixture presentation. It cannot
+access a wallet, read exchange credentials, place orders, transfer funds or
+withdraw funds. The authoritative Python implementation remains in this
+repository. The direct MP4 link is provided so video review does not depend on an
+X login or embed working for the reviewer.
+
+The current repository regression contains **79 Python tests total** (the
+original 77 product tests plus 2 judge-evidence/export regression tests), **8 UI
+tests**, and **5 judge-surface tests**. The original 77/8 product-test counts in
+this record remain the historically measured submission evidence rather than
+being retroactively rewritten.
+
 ## Rendered Chromium QA
 
 The final UI source hashes above were served through the actual local Python
@@ -210,15 +242,18 @@ See [SECURITY.md](../SECURITY.md) for the complete claim boundary.
 
 ## External submission handoff
 
-The repository contains no evidence of:
+A final public Track A post is now externally addressable at:
+`https://x.com/Selenephose/status/2097465082141905231`. The repository also
+contains the 98-second MP4 and exposes the direct raw-file URL above.
 
-- a final public X reply or quote-post URL;
-- an uploaded public/unlisted video URL;
-- successful official survey submission;
-- accepted contest entry, placement, prize, payment or revenue.
+The owner reports that the official survey returned a submitted/check-mark
+confirmation. That account-specific survey receipt is not stored as a public,
+machine-verifiable repository artifact, so the repository does not independently
+prove the survey response itself.
 
-Those account-specific actions remain **UNVERIFIED** until the owner supplies
-their actual confirmations. A prepared post or form field is not a submission.
+Still **UNVERIFIED** here: contest acceptance, placement, prize, payment or
+revenue. A public post and owner-reported survey success do not imply any of those
+outcomes.
 
 ## Current verdict
 
@@ -231,6 +266,7 @@ their actual confirmations. A prepared post or form field is not a submission.
 | Final release payload commit and clean-tree gate | **PASS — `f9e0e9e`** |
 | Local/remote `main` SHA equality | **PASS at release payload checkpoint; final doc-only head rechecked in handoff** |
 | GitHub Actions | **UNVERIFIED / ACCOUNT-LEVEL BLOCKER** |
-| X post and official survey | **UNVERIFIED / OWNER ACTION** |
+| Public X Track A post | **VERIFIED URL PRESENT** |
+| Official survey | **OWNER-REPORTED SUBMITTED; PUBLIC RECEIPT NOT STORED** |
 
-**LOCAL PRODUCT EVIDENCE: PASS. EXTERNAL X/SURVEY SUBMISSION: NOT YET VERIFIED.**
+**LOCAL PRODUCT EVIDENCE: PASS. PUBLIC X POST: VERIFIED. SURVEY: OWNER-REPORTED SUBMITTED. CONTEST OUTCOME: UNVERIFIED.**

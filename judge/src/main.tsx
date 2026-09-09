@@ -19,9 +19,11 @@ type Evidence = {
   proof_counts: {python_tests: number; ui_tests: number; browser_checks: number; responsive_checks: number; policy_attacks: string; authorization_bypasses: string};
 };
 
-const SOURCE = 'https://github.com/am-selenephos/KACHING';
-const VIDEO = 'https://x.com/Selenephose/status/2097465082141905231';
-const VERIFY = `${SOURCE}/blob/main/docs/VERIFICATION.md`;
+const SOURCE = 'https://gitlab.com/am.statementforge/kaching';
+const SUBMITTED_SOURCE = 'https://github.com/am-selenephos/KACHING';
+const VIDEO = 'https://gitlab.com/am.statementforge/kaching/-/raw/main/docs/demo/KACHING-98s.mp4';
+const SUBMISSION = 'https://x.com/Selenephose/status/2097465082141905231';
+const VERIFY = `${SOURCE}/-/blob/main/docs/VERIFICATION.md`;
 const short = (value?: string) => !value ? '—' : value.length < 30 ? value : `${value.slice(0, 14)}…${value.slice(-10)}`;
 
 function App() {
@@ -52,8 +54,10 @@ function App() {
       <a className="brand" href="#top">KACHING!</a>
       <div className="edition">BINANCE AGENT OS · TRACK A</div>
       <nav>
-        <a href={SOURCE}>Source ↗</a>
+        <a href={SOURCE}>Public source ↗</a>
+        <a href={SUBMITTED_SOURCE}>Submitted GitHub ↗</a>
         <a href={VIDEO}>98s demo ↗</a>
+        <a href={SUBMISSION}>Submission ↗</a>
         <a href={VERIFY}>Verification ↗</a>
       </nav>
     </header>

@@ -9,7 +9,7 @@
 KACHING! is a proof-carrying financial authorization kernel for AI agents.
 Models may propose actions; only deterministic policy can create authority.
 
-**[Open the Proof Explorer ↗](https://kaching-proof.miniup.app)** · **[Watch the 98-second demo ↗](https://x.com/Selenephose/status/2097465082141905231)** · **[Read verification ↗](docs/VERIFICATION.md)**
+**[Open the Proof Explorer ↗](https://kaching-proof.miniup.app)** · **[Watch the 98-second demo ↗](https://gitlab.com/am.statementforge/kaching/-/raw/main/docs/demo/KACHING-98s.mp4)** · **[Track A submission ↗](https://x.com/Selenephose/status/2097465082141905231)** · **[Read verification ↗](docs/VERIFICATION.md)** · **[Public GitLab mirror ↗](https://gitlab.com/am.statementforge/kaching)**
 
 </div>
 
@@ -51,6 +51,8 @@ AI proposes a financial action
 | Live execution from browser | **None** |
 
 The seven authorization bypass classes are amount escalation, resource mutation, audience mutation, signature forgery, policy drift, expired authority, and consumed-lease replay. The exact signed action verifies **VALID**; each tested mutation is **REJECTED** with a specific reason.
+
+Machine-readable fixture evidence: **[judge/public/evidence.json](judge/public/evidence.json)**.
 
 ### 30-second judge path
 
@@ -137,20 +139,34 @@ policy, account state or issuer keys.
 
 ## Verify locally
 
+Fastest judge path after dependencies are installed:
+
+```bash
+./scripts/judge_verify.sh
+```
+
+The script stays on deterministic/offline surfaces; it does not enable `--live`.
+
+Equivalent commands:
+
 ```bash
 python -m unittest discover -s tests -v
 python demo_attack_suite.py
 python -m compileall -q tradegate tests
 npm test --prefix ui
 npm run build --prefix ui
+npm test --prefix judge
+npm run build --prefix judge
 python scripts/release_safety_audit.py
 git diff --check
 ```
 
-The current standalone regression contains **77 Python unittest cases** and
-**8 UI test cases**. The dated [verification record](docs/VERIFICATION.md)
-distinguishes local results, rendered-browser evidence, repository state and
-external gates. A local pass is not a GitHub Actions pass.
+The current repository regression contains **79 Python unittest cases total**
+(**77 product tests + 2 judge-evidence/export regression tests**), **8 UI tests**,
+and **5 judge-surface tests**. The dated [verification record](docs/VERIFICATION.md)
+distinguishes original submission evidence from post-submission judge-access
+polish, rendered-browser evidence, repository state and external gates. A local
+pass is not a GitHub Actions pass.
 
 ## Evidence gallery
 
